@@ -1,0 +1,45 @@
+# ═══════════════════════════════════════════════════════════════
+# MiForge Harness: OpenHands (formerly OpenDevin)
+# Docker-sandboxed autonomous agent. 75K stars. MIT.
+# Web UI at localhost:3001. Agents write code, run commands, browse web.
+#
+# Usage: docker compose -f harnesses/openhands.docker-compose.yml up
+# UI:    http://localhost:3001
+# ═══════════════════════════════════════════════════════════════
+
+services:
+  openhands:
+    image: docker.all-hands.dev/all-hands-ai/openhands:latest
+    container_name: miforge-openhands
+    ports:
+      - "3001:3000"
+    environment:
+      # Route through MiForge LiteLLM proxy → free providers
+      - LLM_BASE_URL=http://host.docker.internal:4000/v1
+      - LLM_API_KEY=miforge-local-dev
+      - LLM_MODEL=claude-sonnet-4-5
+      # Sandbox runtime
+      - SANDBOX_RUNTIME_CONTAINER_IMAGE=docker.all-hands.dev/all-hands-ai/runtime:latest-nikolaik
+      - WORKSPACE_MOUNT_PATH=/opt/workspace
+      # Security
+      - SANDBOX_USER_ID=1000
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - openhands-workspace:/opt/workspace
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+
+volumes:
+  openhands-workspace:
+
+# ═══════════════════════════════════════════════════════════════
+# NOTE: OpenHands requires Docker-in-Docker access (docker.sock mount).
+# The agent runs in a sandboxed container. It cannot access host
+# filesystem outside /opt/workspace. Safe for autonomous operation.
+#
+# To connect to NVIDIA NIM directly (no LiteLLM proxy):
+#   LLM_BASE_URL=https://integrate.api.nvidia.com/v1
+#   LLM_API_KEY=${NVIDIA_API_KEY}
+#   LLM_MODEL=nvidia/nemotron-3-super-120b-a12b
+# ═══════════════════════════════════════════════════════════════

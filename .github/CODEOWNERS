@@ -1,0 +1,5 @@
+# CODEOWNERS file for MiForge repository
+
+# Default owners for all files
+# These teams will be automatically requested for review on all PRs
+* @RealMiLyfe/miforge-dev @RealMiLyfe/miforge-support

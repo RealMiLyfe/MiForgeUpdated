@@ -1,0 +1,144 @@
+# ═══════════════════════════════════════════════════════════════
+# MiForge Platform — Full Infrastructure Stack
+# docker compose up -d  ← One command, entire backend running
+# Monthly cost: $0.00
+# ═══════════════════════════════════════════════════════════════
+
+services:
+  # ── MEMORY TIER 2: Redis (Working Memory, 24h TTL) ──
+  redis:
+    image: redis:7-alpine
+    container_name: miforge-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+    restart: unless-stopped
+
+  # ── MEMORY TIER 4: KuzuDB (Graph Memory for Cognee) ──
+  kuzu:
+    image: kuzudb/kuzu:latest
+    container_name: miforge-kuzu
+    ports:
+      - "7474:7474"
+      - "7687:7687"
+    volumes:
+      - kuzu-data:/kuzu
+    restart: unless-stopped
+
+  # ── RAG: ChromaDB (Vector Database, unlimited local) ──
+  chromadb:
+    image: chromadb/chroma:latest
+    container_name: miforge-chromadb
+    ports:
+      - "8000:8000"
+    volumes:
+      - chroma-data:/chroma/chroma
+    environment:
+      - IS_PERSISTENT=TRUE
+      - ANONYMIZED_TELEMETRY=FALSE
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/heartbeat"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+
+  # ── PROXY: LiteLLM (Unified API gateway, all providers behind one endpoint) ──
+  litellm:
+    image: ghcr.io/berriai/litellm:main-latest
+    container_name: miforge-litellm
+    ports:
+      - "4000:4000"
+    volumes:
+      - ./providers/litellm-config.yaml:/app/config.yaml:ro
+    environment:
+      - NVIDIA_API_KEY=${NVIDIA_API_KEY}
+      - GROQ_API_KEY=${GROQ_API_KEY}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
+      - CEREBRAS_API_KEY=${CEREBRAS_API_KEY}
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
+      - COHERE_API_KEY=${COHERE_API_KEY}
+      - MISTRAL_API_KEY=${MISTRAL_API_KEY}
+    command: ["--config", "/app/config.yaml", "--port", "4000", "--detailed_debug"]
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4000/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+
+  # ── OBSERVABILITY: Phoenix (LLM Traces + Hallucination Detection) ──
+  phoenix:
+    image: arizephoenix/phoenix:latest
+    container_name: miforge-phoenix
+    ports:
+      - "6006:6006"
+      - "4317:4317"  # OTLP gRPC
+    environment:
+      - PHOENIX_WORKING_DIR=/phoenix
+    volumes:
+      - phoenix-data:/phoenix
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:6006/healthz"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+
+  # ── INTERFACE: Open WebUI (Chat interface connected to LiteLLM) ──
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:main
+    container_name: miforge-webui
+    ports:
+      - "3000:8080"
+    environment:
+      - OPENAI_API_BASE_URL=http://litellm:4000/v1
+      - OPENAI_API_KEY=miforge-local-dev
+      - WEBUI_AUTH=false
+      - ENABLE_SIGNUP=true
+    volumes:
+      - webui-data:/app/backend/data
+    depends_on:
+      litellm:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # ── MEMORY TIER 4: Cognee REST API (Graph Memory Engine) ──
+  cognee:
+    image: cognee/cognee:latest
+    container_name: miforge-cognee
+    ports:
+      - "8001:8000"
+    environment:
+      - GRAPH_DATABASE_PROVIDER=kuzu
+      - GRAPH_DATABASE_URL=bolt://kuzu:7687
+      - VECTOR_DATABASE_PROVIDER=chromadb
+      - VECTOR_DATABASE_URL=http://chromadb:8000
+    depends_on:
+      kuzu:
+        condition: service_started
+      chromadb:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  redis-data:
+  kuzu-data:
+  chroma-data:
+  phoenix-data:
+  webui-data:
+
+networks:
+  default:
+    name: miforge-network

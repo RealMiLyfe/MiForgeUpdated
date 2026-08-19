@@ -1,0 +1,48 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "miforge"
+version = "1.0.0"
+description = "MiForge AI Platform SDK — The Complete Free AI Development Stack"
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.10"
+authors = [
+    {name = "MiLyfe", email = "opensource@milyfe.com"}
+]
+keywords = ["ai", "llm", "agents", "free", "platform", "memory", "rag"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Software Development :: Libraries",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+
+dependencies = [
+    "httpx>=0.25.0",
+    "redis>=5.0.0",
+    "pydantic>=2.0.0",
+]
+
+[project.optional-dependencies]
+memory = ["mem0ai>=0.1.0", "cognee>=0.1.0"]
+rag = ["chromadb>=0.4.0", "cohere>=5.0.0"]
+voice = ["coqui-tts>=0.20.0"]
+browser = ["browser-use>=0.1.0", "playwright>=1.40.0"]
+all = ["miforge[memory,rag,voice,browser]"]
+
+[project.urls]
+Homepage = "https://miforge.dev"
+Repository = "https://github.com/RealMiLyfe/MiForgeUpdated"
+Documentation = "https://docs.miforge.dev"
+
+[tool.setuptools.packages.find]
+include = ["miforge*"]
