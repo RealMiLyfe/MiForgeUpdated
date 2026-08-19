@@ -1,5 +1,5 @@
 /**
- * Data models for MiForge GitHub issue automation system
+ * Data models for GitHub issue automation system
  */
 
 export interface ClassificationResult {

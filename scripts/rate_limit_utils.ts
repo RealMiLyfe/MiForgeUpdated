@@ -1,6 +1,6 @@
 /**
  * Rate Limit Utilities
- * Handles GitHub API rate limiting for MiForge
+ * Handles GitHub API rate limiting
  */
 
 import { Octokit } from "@octokit/rest";

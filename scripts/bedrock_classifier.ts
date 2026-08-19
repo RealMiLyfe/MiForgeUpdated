@@ -1,6 +1,6 @@
 /**
  * Bedrock Classifier Module
- * Classifies GitHub issues using AWS Bedrock Claude for MiForge
+ * Classifies GitHub issues using AWS Bedrock Claude Opus 4.6
  */
 
 import {
@@ -170,7 +170,7 @@ function parseBedrockResponse(responseBody: string): ClassificationResult {
 }
 
 /**
- * Classify an issue using AWS Bedrock Claude with input validation
+ * Classify an issue using AWS Bedrock Claude Sonnet 4 with input validation
  */
 export async function classifyIssue(
   issueTitle: string,

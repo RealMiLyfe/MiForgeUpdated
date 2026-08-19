@@ -1,10 +1,14 @@
 name: Duplicate Reaction Check
 
+# Checks for 👎 reactions on duplicate detection comments
+# Runs on schedule to catch reactions that can't be triggered directly
+
 on:
   schedule:
     # Run every hour
     - cron: '0 * * * *'
   workflow_dispatch:
+    # Allow manual trigger for testing
 
 permissions:
   issues: write
@@ -20,8 +24,9 @@ jobs:
           script: |
             const { owner, repo } = context.repo;
             
-            console.log('=== MiForge: Checking for 👎 reactions on duplicate detection comments ===\n');
+            console.log('=== Checking for 👎 reactions on duplicate detection comments ===\n');
             
+            // Fetch open issues with duplicate label
             const { data: issues } = await github.rest.issues.listForRepo({
               owner,
               repo,
@@ -37,6 +42,7 @@ jobs:
             for (const issue of issues) {
               console.log(`\nProcessing issue #${issue.number}: ${issue.title}`);
               
+              // Fetch comments
               const { data: comments } = await github.rest.issues.listComments({
                 owner,
                 repo,
@@ -44,6 +50,7 @@ jobs:
                 per_page: 100
               });
               
+              // Find duplicate detection comment
               const duplicateComment = comments.find(c => 
                 c.body && c.body.includes('Potential Duplicate Detected')
               );
@@ -55,6 +62,7 @@ jobs:
               
               console.log(`  Found duplicate detection comment: ${duplicateComment.id}`);
               
+              // Check for 👎 reactions
               try {
                 const { data: reactions } = await github.rest.reactions.listForIssueComment({
                   owner,
@@ -68,6 +76,7 @@ jobs:
                 if (hasThumbsDown) {
                   console.log('  ✓ Found 👎 reaction - relabeling issue');
                   
+                  // Remove duplicate label
                   try {
                     await github.rest.issues.removeLabel({
                       owner,
@@ -80,6 +89,7 @@ jobs:
                     console.log(`  Could not remove duplicate label: ${error.message}`);
                   }
                   
+                  // Add pending-triage label
                   try {
                     await github.rest.issues.addLabels({
                       owner,
@@ -92,6 +102,7 @@ jobs:
                     console.log(`  Could not add pending-triage label: ${error.message}`);
                   }
                   
+                  // Post acknowledgment comment
                   await github.rest.issues.createComment({
                     owner,
                     repo,
@@ -116,6 +127,6 @@ jobs:
       - name: Create workflow summary
         if: always()
         run: |
-          echo "## MiForge Duplicate Reaction Check" >> "$GITHUB_STEP_SUMMARY"
+          echo "## Duplicate Reaction Check" >> "$GITHUB_STEP_SUMMARY"
           echo "Checked for 👎 reactions on duplicate detection comments" >> "$GITHUB_STEP_SUMMARY"
           echo "Status: ${{ job.status }}" >> "$GITHUB_STEP_SUMMARY"

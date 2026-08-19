@@ -53,6 +53,7 @@ jobs:
               },
             });
 
+            // Parse excluded issue numbers
             function getExcludedIssues() {
               const excludeString = process.env.EXCLUDE_ISSUES || "";
               if (!excludeString.trim()) return new Set();
@@ -163,6 +164,7 @@ jobs:
                 console.log(`Found ${issues.length} matching issues`);
 
                 for (const issue of issues) {
+                  // Skip excluded issues
                   if (excludedIssues.has(issue.number)) {
                     console.log(`Skipping excluded issue #${issue.number}`);
                     continue;
@@ -170,6 +172,7 @@ jobs:
 
                   console.log(`Processing issue: #${issue.number} - ${issue.title}`);
                   
+                  // Check if the comment already exists
                   const commentExists = await checkExistingComment(owner, repo, issue.number, commentBody);
                   
                   if (commentExists) {
@@ -177,6 +180,7 @@ jobs:
                     continue;
                   }
 
+                  // Create an issue comment using the REST API
                   await octokit.rest.issues.createComment({
                     owner,
                     repo,

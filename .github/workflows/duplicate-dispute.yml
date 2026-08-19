@@ -1,8 +1,13 @@
 name: Duplicate Dispute Handler
 
+# Triggers when users dispute a duplicate detection by:
+# 1. Commenting on an issue with 'duplicate' label
+
 on:
   issue_comment:
     types: [created]
+  # Note: GitHub Actions doesn't have a direct trigger for reactions
+  # Reaction handling is done via scheduled workflow or manual trigger
 
 permissions:
   issues: write
@@ -10,6 +15,7 @@ permissions:
 
 jobs:
   handle-comment-dispute:
+    # Only run for issue comments (not PR comments) on issues with duplicate label
     if: |
       github.event_name == 'issue_comment' && 
       !github.event.issue.pull_request
@@ -38,6 +44,7 @@ jobs:
             const newCommentId = context.payload.comment.id;
             const newCommentDate = new Date(context.payload.comment.created_at);
             
+            // Fetch all comments
             const { data: comments } = await github.rest.issues.listComments({
               owner,
               repo,
@@ -45,6 +52,7 @@ jobs:
               per_page: 100
             });
             
+            // Find duplicate detection comment
             const duplicateComment = comments.find(c => 
               c.body && c.body.includes('Potential Duplicate Detected')
             );
@@ -76,6 +84,7 @@ jobs:
             
             console.log(`Relabeling issue #${issueNumber}...`);
             
+            // Remove duplicate label
             try {
               await github.rest.issues.removeLabel({
                 owner,
@@ -88,6 +97,7 @@ jobs:
               console.log(`Could not remove duplicate label: ${error.message}`);
             }
             
+            // Add pending-triage label
             try {
               await github.rest.issues.addLabels({
                 owner,
@@ -100,6 +110,7 @@ jobs:
               console.log(`Could not add pending-triage label: ${error.message}`);
             }
             
+            // Post acknowledgment comment
             await github.rest.issues.createComment({
               owner,
               repo,
@@ -113,7 +124,7 @@ jobs:
       - name: Create workflow summary
         if: always()
         run: |
-          echo "## MiForge Duplicate Dispute Handler" >> "$GITHUB_STEP_SUMMARY"
+          echo "## Duplicate Dispute Handler" >> "$GITHUB_STEP_SUMMARY"
           echo "Issue: #${{ github.event.issue.number }}" >> "$GITHUB_STEP_SUMMARY"
           echo "Comment by: @${{ github.event.comment.user.login }}" >> "$GITHUB_STEP_SUMMARY"
           echo "Status: ${{ job.status }}" >> "$GITHUB_STEP_SUMMARY"

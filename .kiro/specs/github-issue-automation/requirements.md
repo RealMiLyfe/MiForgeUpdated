@@ -2,12 +2,12 @@
 
 ## Introduction
 
-This specification defines an automated GitHub issue management system for the MiForge repository by MiLyfe. The system uses AWS Bedrock's Claude models to intelligently categorize issues, detect duplicates, and manage issue lifecycle through automated workflows.
+This specification defines an automated GitHub issue management system for the MiForge repository. The system will use AWS Bedrock's Claude Sonnet 4.5 model to intelligently categorize issues, detect duplicates, and manage issue lifecycle through automated workflows.
 
 ## Glossary
 
 - **Issue_Manager**: The automated system that processes GitHub issues (implemented in TypeScript)
-- **Bedrock_Classifier**: The AWS Bedrock Claude model used for intelligent classification
+- **Bedrock_Classifier**: The AWS Bedrock Claude Sonnet 4.5 model used for intelligent classification
 - **Duplicate_Detector**: The component that identifies duplicate issues using AI
 - **Label_Assigner**: The component that automatically assigns appropriate labels to issues
 - **Stale_Issue_Handler**: The component that manages stale issues with pending-response label
@@ -66,15 +66,17 @@ This specification defines an automated GitHub issue management system for the M
 
 ### Requirement 5: AWS Bedrock Integration
 
-**User Story:** As a system administrator, I want the automation to use AWS Bedrock Claude securely, so that we leverage advanced AI capabilities while maintaining security best practices.
+**User Story:** As a system administrator, I want the automation to use AWS Bedrock Claude Sonnet 4 securely, so that we leverage advanced AI capabilities while maintaining security best practices.
 
 #### Acceptance Criteria
 
-1. THE Bedrock_Classifier SHALL use AWS Bedrock Claude models via inference profiles
+1. THE Bedrock_Classifier SHALL use AWS Bedrock Claude Sonnet 4 model via inference profile (us.anthropic.claude-sonnet-4-20250514-v1:0)
 2. WHEN making API calls, THE Bedrock_Classifier SHALL authenticate using AWS credentials stored in GitHub Secrets
 3. WHEN API calls fail, THE Bedrock_Classifier SHALL retry up to 3 times with exponential backoff
 4. WHEN all retries fail, THE Issue_Manager SHALL log the error and continue without AI classification
 5. THE Bedrock_Classifier SHALL include the complete label taxonomy in the prompt for accurate classification
+
+**Note:** Inference profiles (format: `us.anthropic.claude-sonnet-4-20250514-v1:0`) provide cross-region routing and higher throughput compared to direct model IDs.
 
 ### Requirement 6: Label Taxonomy Support
 

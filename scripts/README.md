@@ -1,4 +1,4 @@
-# MiForge Issue Automation Scripts
+# GitHub Issue Automation Scripts
 
 TypeScript modules for automated GitHub issue management using AWS Bedrock AI.
 
@@ -8,7 +8,6 @@ TypeScript modules for automated GitHub issue management using AWS Bedrock AI.
 scripts/
 ├── data_models.ts          # Data structures and interfaces
 ├── bedrock_classifier.ts   # AWS Bedrock integration for classification
-├── bedrock_comment_generator.ts # AI-generated acknowledgment comments
 ├── assign_labels.ts        # Label assignment logic
 ├── detect_duplicates.ts    # Duplicate detection using AI
 ├── retry_utils.ts          # Retry logic with exponential backoff
@@ -16,8 +15,7 @@ scripts/
 ├── workflow_summary.ts     # Workflow summary generation
 ├── triage_issue.ts         # Main triage orchestration script
 ├── close_duplicates.ts     # Duplicate closer script
-├── close_stale.ts          # Stale issue closer script
-└── delete_spam_comments.ts # AI-powered spam detection and removal
+└── close_stale.ts          # Stale issue closer script
 ```
 
 ## Modules
@@ -33,7 +31,7 @@ Defines the data structures used throughout the system:
 
 ### Bedrock Classifier (`bedrock_classifier.ts`)
 
-Integrates with AWS Bedrock Claude for issue classification:
+Integrates with AWS Bedrock Claude Sonnet 4.5 for issue classification:
 
 ```typescript
 async function classifyIssue(
@@ -48,7 +46,6 @@ async function classifyIssue(
 - Parses AI responses
 - Handles errors gracefully
 - Uses retry logic for reliability
-- Input sanitization for prompt injection protection
 
 ### Label Assignment (`assign_labels.ts`)
 
@@ -87,7 +84,7 @@ async function detectDuplicates(
 ```
 
 **Features:**
-- Fetches existing open issues (configurable window)
+- Fetches existing open issues (last 90 days)
 - Processes in batches of 10
 - Uses AI for semantic similarity
 - Returns matches with score > 0.80
@@ -125,6 +122,33 @@ async function processBatch<T, R>(
 ): Promise<R[]>
 ```
 
+**Features:**
+- Monitors rate limit status
+- Pauses when approaching limits
+- Processes items in batches
+- Adds delays between batches
+
+### Workflow Summary (`workflow_summary.ts`)
+
+Generates workflow run summaries:
+
+```typescript
+function createSummary(summary: WorkflowSummary): void
+
+function logError(
+  errors: WorkflowSummary["errors"],
+  step: string,
+  error: any,
+  issueNumber?: number
+): void
+```
+
+**Features:**
+- Creates formatted summaries
+- Tracks success/failure counts
+- Logs detailed error information
+- Writes to GitHub Actions summary
+
 ## Main Scripts
 
 ### Issue Triage (`triage_issue.ts`)
@@ -136,19 +160,45 @@ Orchestrates the complete triage process:
 3. Detects duplicates
 4. Posts duplicate comments
 5. Adds duplicate label if needed
-6. Posts AI-generated acknowledgment comments
+
+**Environment Variables:**
+- `ISSUE_NUMBER` - Issue number to triage
+- `ISSUE_TITLE` - Issue title
+- `ISSUE_BODY` - Issue body
+- `REPOSITORY_OWNER` - Repository owner
+- `REPOSITORY_NAME` - Repository name
+- `GITHUB_TOKEN` - GitHub API token
+- `AWS_ACCESS_KEY_ID` - AWS access key
+- `AWS_SECRET_ACCESS_KEY` - AWS secret key
+- `AWS_REGION` - AWS region (optional)
 
 ### Close Duplicates (`close_duplicates.ts`)
 
-Closes issues marked as duplicate for 3+ days with user response detection.
+Closes issues marked as duplicate for 3+ days:
+
+1. Fetches issues with "duplicate" label
+2. Checks label application date
+3. Closes issues older than threshold
+4. Posts closing comment
+
+**Environment Variables:**
+- `REPOSITORY_OWNER` - Repository owner
+- `REPOSITORY_NAME` - Repository name
+- `GITHUB_TOKEN` - GitHub API token
 
 ### Close Stale (`close_stale.ts`)
 
-Closes inactive issues with "pending-response" label after 7+ days.
+Closes inactive issues with "pending-response" label:
 
-### Delete Spam Comments (`delete_spam_comments.ts`)
+1. Fetches issues with "pending-response" label
+2. Checks last activity date
+3. Closes issues inactive for 7+ days
+4. Posts closing comment
 
-AI-powered dual-pass spam detection with confirmation for high confidence.
+**Environment Variables:**
+- `REPOSITORY_OWNER` - Repository owner
+- `REPOSITORY_NAME` - Repository name
+- `GITHUB_TOKEN` - GitHub API token
 
 ## Development
 
@@ -164,6 +214,8 @@ npm install
 npm run build
 ```
 
+This compiles TypeScript to JavaScript in the `dist/` directory.
+
 ### Clean
 
 ```bash
@@ -172,12 +224,14 @@ npm run clean
 
 ### Local Testing
 
+You can test scripts locally by setting environment variables:
+
 ```bash
 export ISSUE_NUMBER=123
 export ISSUE_TITLE="Test issue"
 export ISSUE_BODY="Test description"
-export REPOSITORY_OWNER="RealMiLyfe"
-export REPOSITORY_NAME="MiForgeUpdated"
+export REPOSITORY_OWNER="owner"
+export REPOSITORY_NAME="repo"
 export GITHUB_TOKEN="your-token"
 export AWS_ACCESS_KEY_ID="your-key"
 export AWS_SECRET_ACCESS_KEY="your-secret"
@@ -190,13 +244,45 @@ node dist/triage_issue.js
 
 ### Thresholds
 
-| Setting | Default | File |
-|---------|---------|------|
-| Duplicate Closure | 3 days | `close_duplicates.ts` |
-| Stale Issues | 7 days | `close_stale.ts` |
-| Duplicate Similarity | 0.80 | `detect_duplicates.ts` |
-| Batch Size | 10 | `detect_duplicates.ts` |
-| Spam Confidence | 0.95 | `delete_spam_comments.ts` |
+**Duplicate Closure:**
+```typescript
+// close_duplicates.ts
+const DAYS_THRESHOLD = 3;
+```
+
+**Stale Issues:**
+```typescript
+// close_stale.ts
+const DAYS_THRESHOLD = 7;
+```
+
+**Duplicate Similarity:**
+```typescript
+// detect_duplicates.ts
+const SIMILARITY_THRESHOLD = 0.8;
+```
+
+**Batch Size:**
+```typescript
+// detect_duplicates.ts
+const BATCH_SIZE = 10;
+```
+
+**Search Window:**
+```typescript
+// detect_duplicates.ts
+const DAYS_TO_SEARCH = 90;
+```
+
+### Bedrock Configuration
+
+```typescript
+// bedrock_classifier.ts
+const MODEL_ID = "us.anthropic.claude-sonnet-4-20250514-v1:0"; // Inference profile
+const MAX_TOKENS = 2048;
+const TEMPERATURE = 0.3;
+const TOP_P = 0.9;
+```
 
 ## Error Handling
 
@@ -208,6 +294,42 @@ All modules implement comprehensive error handling:
 4. **Fault Isolation** - Individual failures don't stop batch processing
 5. **Workflow Summaries** - Track and report all errors
 
+## Testing
+
+### Unit Tests
+
+(To be implemented)
+
+```bash
+npm test
+```
+
+### Integration Tests
+
+Test against a real repository:
+
+1. Create a test repository
+2. Set up AWS credentials
+3. Run workflows manually
+4. Verify results
+
+## Performance
+
+### Optimization Strategies
+
+1. **Batch Processing** - Process issues in batches to reduce API calls
+2. **Rate Limit Handling** - Proactively check and respect rate limits
+3. **Caching** - Fetch existing issues once per run
+4. **Parallel Processing** - Process batches in parallel where possible
+5. **Filtering** - Only compare against recent issues (90 days)
+
+### Expected Performance
+
+- **Issue Triage**: 10-15 seconds per issue
+- **Duplicate Detection**: 5-10 seconds per batch of 10 issues
+- **Duplicate Closure**: 2-3 seconds per issue
+- **Stale Issue Closure**: 2-3 seconds per issue
+
 ## Security
 
 ### Best Practices
@@ -215,9 +337,50 @@ All modules implement comprehensive error handling:
 1. **Never commit credentials** - Use environment variables
 2. **Least privilege** - IAM policies grant only necessary permissions
 3. **Secure secrets** - Store in GitHub Secrets
-4. **Input sanitization** - All user inputs are sanitized before AI processing
-5. **Prompt injection protection** - Dangerous patterns are filtered
-6. **Dual-pass spam detection** - Two independent AI evaluations required
+4. **Audit logs** - Monitor AWS CloudTrail
+5. **Dependency scanning** - Regular `npm audit`
+
+### Credentials
+
+Required credentials:
+- AWS Access Key ID (Bedrock access)
+- AWS Secret Access Key
+- GitHub Token (automatically provided in workflows)
+
+## Troubleshooting
+
+### Common Issues
+
+**TypeScript compilation errors:**
+```bash
+npm run clean
+npm install
+npm run build
+```
+
+**Module not found errors:**
+- Ensure all imports use `.js` extension (for ES modules)
+- Check `tsconfig.json` module resolution
+
+**AWS authentication errors:**
+- Verify credentials are set correctly
+- Check IAM permissions
+- Ensure Bedrock model access is approved
+
+**GitHub API errors:**
+- Check token permissions
+- Verify rate limits
+- Ensure labels exist
+
+## Contributing
+
+When adding new features:
+
+1. Follow existing code structure
+2. Add comprehensive error handling
+3. Include logging for debugging
+4. Update documentation
+5. Test thoroughly
 
 ## License
 

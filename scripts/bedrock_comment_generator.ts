@@ -1,7 +1,6 @@
 /**
  * Bedrock Comment Generator Module
  * Generates personalized acknowledgment comments using AWS Bedrock
- * MiForge Issue Automation
  */
 
 import { Octokit } from "@octokit/rest";
@@ -50,6 +49,7 @@ async function fetchIssueComments(
       return "(No comments yet)";
     }
 
+    // Format comments with author and body
     const formattedComments = comments
       .map((comment, index) => {
         const author = comment.user?.login || "unknown";
@@ -58,6 +58,7 @@ async function fetchIssueComments(
       })
       .join("\n\n---\n\n");
 
+    // Truncate if too long
     if (formattedComments.length > MAX_COMMENTS_LENGTH) {
       return formattedComments.substring(0, MAX_COMMENTS_LENGTH) + "\n\n[Comments truncated for length]";
     }
@@ -93,7 +94,7 @@ function buildCommentPrompt(
   issueComments: string,
   labels: string
 ): string {
-  return `You are a friendly GitHub bot for the MiForge project by MiLyfe. Generate a welcoming acknowledgment comment for a newly triaged issue.
+  return `You are a friendly GitHub bot for the MiForge project. Generate a welcoming acknowledgment comment for a newly triaged issue.
 
 ===== ISSUE TITLE =====
 ${issueTitle}
@@ -177,12 +178,14 @@ async function invokeBedrockWithFallback(
       console.warn(`${model.name} failed:`, error instanceof Error ? error.message : error);
       lastError = error instanceof Error ? error : new Error(String(error));
       
+      // Continue to next model
       if (model.id !== models[models.length - 1].id) {
         console.log(`Falling back to next model...`);
       }
     }
   }
 
+  // All models failed
   throw lastError || new Error("All models failed to generate comment");
 }
 
@@ -208,7 +211,7 @@ function parseCommentResponse(responseBody: string): string {
 }
 
 /**
- * Generate acknowledgment comment using Bedrock
+ * Generate acknowledgment comment using Bedrock Claude Opus 4.6
  */
 export async function generateAcknowledgmentComment(
   owner: string,
@@ -219,10 +222,12 @@ export async function generateAcknowledgmentComment(
   classification: ClassificationResult,
   githubToken: string
 ): Promise<string> {
+  // Sanitize and truncate inputs
   const sanitizedTitle = issueTitle.substring(0, MAX_TITLE_LENGTH);
   const sanitizedBody = issueBody.substring(0, MAX_BODY_LENGTH);
   const labels = classification.recommended_labels.join(", ") || "pending-triage";
 
+  // Fetch existing comments
   const issueComments = await fetchIssueComments(owner, repo, issueNumber, githubToken);
 
   const client = createBedrockClient();

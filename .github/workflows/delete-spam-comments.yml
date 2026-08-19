@@ -81,7 +81,7 @@ jobs:
           EVENT: ${{ github.event_name }}
           COMMENT_ID: ${{ github.event.comment.id || inputs.comment_id || 'N/A' }}
         run: |
-          echo "## MiForge Spam Comment Deletion Summary" >> "$GITHUB_STEP_SUMMARY"
+          echo "## Spam Comment Deletion Summary" >> "$GITHUB_STEP_SUMMARY"
           echo "- Trigger: $EVENT" >> "$GITHUB_STEP_SUMMARY"
           echo "- Comment ID: $COMMENT_ID" >> "$GITHUB_STEP_SUMMARY"
           echo "- Status: ${{ job.status }}" >> "$GITHUB_STEP_SUMMARY"

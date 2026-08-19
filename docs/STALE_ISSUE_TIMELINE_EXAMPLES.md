@@ -1,153 +1,351 @@
-# Stale Issue Timeline Examples
+# Stale Issue Closing - Timeline Examples
 
-Visual examples showing how the MiForge stale issue closing system handles different scenarios.
+## Visual Timeline Examples
+
+### Example 1: Issue Gets Closed (No User Response)
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                     ISSUE LIFECYCLE                              │
+└─────────────────────────────────────────────────────────────────┘
+
+Day 0    Day 1         Day 2-7              Day 8
+  │        │              │                    │
+  │        │              │                    │
+  ▼        ▼              ▼                    ▼
+┌────┐  ┌────┐        ┌────┐              ┌────┐
+│User│  │Main│        │ No │              │Auto│
+│    │  │    │        │    │              │    │
+└────┘  └────┘        └────┘              └────┘
+
+User creates issue:
+"App crashes on startup"
+  │
+  │
+  └──────► Maintainer responds:
+           "Please provide error logs"
+           Adds "pending-response" label
+           (labelDate = Day 1)
+                │
+                │
+                └──────► No activity
+                         (no comments, no label changes)
+                                │
+                                │
+                                └──────► Workflow runs
+                                         Checks: Day 8 - Day 1 = 7 days
+                                         Result: CLOSE ✅
+                                         
+Comment posted:
+"This issue has been automatically closed due to inactivity.
+It has been 7 days since we requested additional information."
+
+Status: CLOSED
+```
 
 ---
 
-## Example 1: Standard Closure (No Response)
+### Example 2: Issue Stays Open (User Responds)
 
 ```
-Day 0  │ Issue #42 opened by user
-       │ Labels: [pending-triage]
-       │
-Day 1  │ Maintainer reviews, asks for more info
-       │ Labels: [pending-response]
-       │ ← Timer starts
-       │
-Day 2  │ (no activity)
-Day 3  │ (no activity)
-Day 4  │ (no activity)
-Day 5  │ (no activity)
-Day 6  │ (no activity)
-Day 7  │ (no activity)
-       │
-Day 8  │ ⚡ Workflow runs at midnight
-       │ → Days since label: 7+ ✓
-       │ → Last activity: Day 1 (label added)
-       │ → CLOSED with comment
-       │ Status: CLOSED
-```
+┌─────────────────────────────────────────────────────────────────┐
+│                     ISSUE LIFECYCLE                              │
+└─────────────────────────────────────────────────────────────────┘
 
-**Result:** Issue automatically closed after 7 days of inactivity.
+Day 0    Day 1    Day 4              Day 8
+  │        │        │                  │
+  │        │        │                  │
+  ▼        ▼        ▼                  ▼
+┌────┐  ┌────┐  ┌────┐            ┌────┐
+│User│  │Main│  │User│            │Auto│
+│    │  │    │  │    │            │    │
+└────┘  └────┘  └────┘            └────┘
+
+User creates issue:
+"App crashes on startup"
+  │
+  │
+  └──────► Maintainer responds:
+           "Please provide error logs"
+           Adds "pending-response" label
+           (labelDate = Day 1)
+                │
+                │
+                └──────► User responds:
+                         "Here are the logs: ..."
+                         (lastActivityDate = Day 4)
+                                │
+                                │
+                                └──────► Workflow runs
+                                         Checks: Day 8 - Day 4 = 4 days
+                                         Result: SKIP ⏳
+                                         (needs 7 days)
+
+Status: OPEN (still waiting for maintainer)
+```
 
 ---
 
-## Example 2: User Responds (Timer Reset)
+### Example 3: Timer Resets Multiple Times
 
 ```
-Day 0  │ Issue #55 opened by user
-       │ Labels: [pending-triage]
-       │
-Day 1  │ Maintainer asks for reproduction steps
-       │ Labels: [pending-response]
-       │ ← Timer starts
-       │
-Day 4  │ User posts reproduction steps
-       │ ← Activity detected! Reference date updated
-       │
-Day 8  │ ⚡ Workflow runs at midnight
-       │ → Days since label: 7+ ✓
-       │ → Last activity: Day 4 (comment)
-       │ → Days since last activity: 4 ✗ (< 7)
-       │ → SKIPPED
-       │
-Day 11 │ (no activity since Day 4)
-       │
-Day 12 │ ⚡ Workflow runs at midnight
-       │ → Days since last activity: 8 ✓ (> 7)
-       │ → CLOSED with comment
-       │ Status: CLOSED
-```
+┌─────────────────────────────────────────────────────────────────┐
+│                     ISSUE LIFECYCLE                              │
+└─────────────────────────────────────────────────────────────────┘
 
-**Result:** Timer effectively reset when user commented. Closed 7 days after last activity.
+Day 0    Day 1    Day 3    Day 5    Day 8    Day 10   Day 15
+  │        │        │        │        │         │        │
+  ▼        ▼        ▼        ▼        ▼         ▼        ▼
+
+User creates issue
+  │
+  └──► Maintainer adds "pending-response"
+       (labelDate = Day 1)
+            │
+            └──► User responds
+                 (lastActivityDate = Day 3)
+                      │
+                      └──► Maintainer responds
+                           Keeps "pending-response"
+                           (lastActivityDate = Day 5)
+                                │
+                                └──► Workflow runs
+                                     Check: Day 8 - Day 5 = 3 days
+                                     Result: SKIP ⏳
+                                          │
+                                          └──► Workflow runs again
+                                               Check: Day 10 - Day 5 = 5 days
+                                               Result: SKIP ⏳
+                                                    │
+                                                    └──► Workflow runs again
+                                                         Check: Day 15 - Day 5 = 10 days
+                                                         Result: CLOSE ✅
+
+Status: CLOSED (no activity for 10 days)
+```
 
 ---
 
-## Example 3: Label Removed (Cancelled)
+### Example 4: Label Removed (Issue Being Worked On)
 
 ```
-Day 0  │ Issue #78 opened by user
-       │ Labels: [pending-triage]
-       │
-Day 1  │ Maintainer asks for logs
-       │ Labels: [pending-response]
-       │ ← Timer starts
-       │
-Day 3  │ Maintainer finds the issue themselves
-       │ Labels: [bug, ide] (pending-response removed)
-       │ ← Timer cancelled
-       │
-Day 8  │ ⚡ Workflow runs at midnight
-       │ → Issue does NOT have pending-response label
-       │ → SKIPPED (not in scope)
-       │ Status: OPEN
-```
+┌─────────────────────────────────────────────────────────────────┐
+│                     ISSUE LIFECYCLE                              │
+└─────────────────────────────────────────────────────────────────┘
 
-**Result:** Removing the label takes the issue out of scope entirely.
+Day 0    Day 1         Day 3              Day 8
+  │        │             │                  │
+  │        │             │                  │
+  ▼        ▼             ▼                  ▼
+┌────┐  ┌────┐       ┌────┐            ┌────┐
+│User│  │Main│       │Main│            │Auto│
+│    │  │    │       │    │            │    │
+└────┘  └────┘       └────┘            └────┘
+
+User creates issue:
+"App crashes on startup"
+  │
+  │
+  └──────► Maintainer responds:
+           "Please provide error logs"
+           Adds "pending-response" label
+           (labelDate = Day 1)
+                │
+                │
+                └──────► Maintainer starts working on it:
+                         Removes "pending-response" label
+                         Adds "in-progress" label
+                                │
+                                │
+                                └──────► Workflow runs
+                                         Query: Find issues with "pending-response"
+                                         Result: SKIP ⏳
+                                         (issue no longer has the label)
+
+Status: OPEN (being actively worked on)
+```
 
 ---
 
-## Example 4: Maintainer Comments (Activity Detected)
+### Example 5: Complex Activity Pattern
 
 ```
-Day 0  │ Issue #91 opened by user
-       │ Labels: [pending-triage]
-       │
-Day 1  │ Maintainer asks for version info
-       │ Labels: [pending-response]
-       │ ← Timer starts
-       │
-Day 5  │ Another maintainer adds context
-       │ ← Activity detected!
-       │
-Day 8  │ ⚡ Workflow runs at midnight
-       │ → Days since last activity: 3 ✗ (< 7)
-       │ → SKIPPED
-       │ Status: OPEN
-```
+┌─────────────────────────────────────────────────────────────────┐
+│                     ISSUE LIFECYCLE                              │
+└─────────────────────────────────────────────────────────────────┘
 
-**Result:** Any comment (even from maintainers) counts as activity.
+Timeline with Activity Tracking:
+
+Day 0:  Issue created
+        └─ Activity: Issue creation
+
+Day 1:  Maintainer adds "pending-response" label
+        └─ labelDate = Day 1
+        └─ Activity: Label change (Day 1)
+
+Day 2:  User adds comment
+        └─ lastActivityDate = Day 2
+        └─ Activity: Comment (Day 2)
+
+Day 4:  Maintainer adds another label "bug"
+        └─ Activity: Label change (Day 4)
+
+Day 6:  Another user adds comment
+        └─ lastActivityDate = Day 6
+        └─ Activity: Comment (Day 6)
+
+Day 8:  Workflow runs
+        └─ labelDate = Day 1
+        └─ lastActivityDate = Day 6 (most recent)
+        └─ referenceDate = Day 6 (max of both)
+        └─ Inactive days = Day 8 - Day 6 = 2 days
+        └─ Result: SKIP ⏳ (needs 7 days)
+
+Day 15: Workflow runs again
+        └─ labelDate = Day 1
+        └─ lastActivityDate = Day 6 (still most recent)
+        └─ referenceDate = Day 6
+        └─ Inactive days = Day 15 - Day 6 = 9 days
+        └─ Result: CLOSE ✅ (exceeds 7 days)
+
+Status: CLOSED (no activity since Day 6)
+```
 
 ---
 
-## Example 5: Duplicate with Pending Response
+## Decision Tree
 
 ```
-Day 0  │ Issue #103 opened by user
-       │ Labels: [pending-triage]
-       │
-Day 1  │ AI detects duplicate
-       │ Labels: [duplicate]
-       │
-Day 1  │ Maintainer also adds pending-response
-       │ Labels: [duplicate, pending-response]
-       │ ← Both timers start
-       │
-Day 4  │ ⚡ Duplicate closer runs
-       │ → duplicate label age: 3 days ✓
-       │ → CLOSED as duplicate
-       │ Status: CLOSED
+                    ┌─────────────────────┐
+                    │  Workflow Runs      │
+                    │  (Daily at Midnight)│
+                    └──────────┬──────────┘
+                               │
+                               ▼
+                    ┌─────────────────────┐
+                    │ Query: Find all     │
+                    │ open issues with    │
+                    │ "pending-response"  │
+                    └──────────┬──────────┘
+                               │
+                               ▼
+                    ┌─────────────────────┐
+                    │ For each issue:     │
+                    └──────────┬──────────┘
+                               │
+                               ▼
+                    ┌─────────────────────┐
+                    │ Still has label?    │
+                    └──────────┬──────────┘
+                               │
+                    ┌──────────┴──────────┐
+                    │                     │
+                   NO                    YES
+                    │                     │
+                    ▼                     ▼
+            ┌──────────────┐    ┌──────────────────┐
+            │ SKIP         │    │ Get label date   │
+            │ (label gone) │    │ Get activity date│
+            └──────────────┘    └────────┬─────────┘
+                                         │
+                                         ▼
+                              ┌──────────────────────┐
+                              │ Calculate:           │
+                              │ referenceDate =      │
+                              │ max(labelDate,       │
+                              │     activityDate)    │
+                              └────────┬─────────────┘
+                                       │
+                                       ▼
+                              ┌──────────────────────┐
+                              │ inactiveDays =       │
+                              │ today - referenceDate│
+                              └────────┬─────────────┘
+                                       │
+                              ┌────────┴────────┐
+                              │                 │
+                         < 7 days          >= 7 days
+                              │                 │
+                              ▼                 ▼
+                    ┌──────────────┐  ┌──────────────────┐
+                    │ SKIP         │  │ Post comment     │
+                    │ (not stale)  │  │ Close issue      │
+                    └──────────────┘  │ Log success      │
+                                      └──────────────────┘
 ```
 
-**Result:** The duplicate closer runs first (3-day threshold vs 7-day), so the issue is closed as duplicate before the stale timer expires.
+---
+
+## Activity Types That Reset Timer
+
+### ✅ Resets Timer (Extends Deadline)
+
+1. **User Comments**
+   ```
+   User: "Here are the logs you requested..."
+   → lastActivityDate updated
+   → Timer resets
+   ```
+
+2. **Maintainer Comments**
+   ```
+   Maintainer: "Thanks, I'll look into this..."
+   → lastActivityDate updated
+   → Timer resets
+   ```
+
+3. **Label Changes**
+   ```
+   Maintainer adds "bug" label
+   → lastActivityDate updated
+   → Timer resets
+   ```
+
+4. **Label Removals**
+   ```
+   Maintainer removes "pending-response" label
+   → Issue no longer tracked
+   → Won't be closed
+   ```
+
+### ❌ Does NOT Reset Timer
+
+1. **Issue Edits** (title/body changes)
+   - Not tracked as activity
+   - Timer continues
+
+2. **Reactions** (👍, ❤️, etc.)
+   - Not tracked as activity
+   - Timer continues
+
+3. **Mentions** in other issues
+   - Not tracked as activity
+   - Timer continues
+
+4. **Assignee Changes**
+   - Not tracked as activity
+   - Timer continues
 
 ---
 
 ## Summary Table
 
-| Scenario | Threshold | Outcome |
-|----------|-----------|---------|
-| No response | 7 days after label | Closed |
-| User responds | 7 days after last activity | Closed (if still pending) |
-| Label removed | N/A | Not eligible |
-| Any comment | Resets reference date | Extended |
-| Also marked duplicate | 3 days (duplicate) | Closed as duplicate first |
+| Scenario | Label Date | Last Activity | Reference Date | Days Inactive | Result |
+|----------|-----------|---------------|----------------|---------------|--------|
+| No response | Day 1 | None | Day 1 | 7+ | ✅ Close |
+| User responds Day 4 | Day 1 | Day 4 | Day 4 | 4 | ⏳ Skip |
+| Label removed | Day 1 | Day 3 | N/A | N/A | ⏳ Skip (no label) |
+| Multiple comments | Day 1 | Day 6 | Day 6 | 2 | ⏳ Skip |
+| Old activity | Day 1 | Day 2 | Day 2 | 8 | ✅ Close |
 
 ---
 
 ## Key Takeaways
 
-1. **Activity resets the clock** - Any interaction extends the window
-2. **Label presence is required** - No `pending-response` label = not eligible
-3. **Duplicate takes priority** - 3-day threshold fires before 7-day stale threshold
-4. **Users are informed** - Closing comments explain how to reopen
+1. **Timer starts** when "pending-response" label is added
+2. **Timer resets** on any comment or label change
+3. **Issue closes** after 7 days of inactivity
+4. **Users can reopen** if they still need help
+5. **Maintainers can prevent** by removing label or commenting
+
+**Goal:** Keep issue tracker clean while being fair to users who need time to respond.

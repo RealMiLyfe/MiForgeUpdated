@@ -1,4 +1,4 @@
-# MiForge Issue Automation Workflows
+# GitHub Issue Automation Workflows
 
 This directory contains automated workflows for managing GitHub issues using AWS Bedrock AI.
 
@@ -9,8 +9,6 @@ The automation system provides:
 - **Duplicate Detection** - Semantic similarity analysis to find duplicate issues
 - **Duplicate Closure** - Automatic closure of confirmed duplicates after 3 days
 - **Stale Issue Management** - Closure of inactive issues after 7 days
-- **Spam Detection** - AI-powered dual-pass spam comment removal
-- **Duplicate Dispute Handling** - Automatic relabeling when users dispute duplicates
 
 ## Workflows
 
@@ -19,12 +17,11 @@ The automation system provides:
 **Trigger:** When a new issue is opened
 
 **What it does:**
-1. Analyzes the issue title and body using AWS Bedrock Claude
+1. Analyzes the issue title and body using AWS Bedrock Claude Sonnet 4.5
 2. Assigns relevant labels from the predefined taxonomy
 3. Detects potential duplicate issues
 4. Posts a comment if duplicates are found
 5. Adds the "duplicate" label if applicable
-6. Posts AI-generated acknowledgment comment
 
 **Required Secrets:**
 - `AWS_ACCESS_KEY_ID` - AWS access key with Bedrock permissions
@@ -39,9 +36,13 @@ The automation system provides:
 **What it does:**
 1. Finds all open issues with the "duplicate" label
 2. Checks how long the label has been applied
-3. Checks for user disputes (comments or 👎 reactions)
-4. Relabels disputed issues for maintainer review
-5. Closes undisputed issues where the label has been present for 3+ days
+3. Closes issues where the label has been present for 3+ days
+4. Posts a closing comment with reference to the original issue
+
+**Manual Trigger:**
+```bash
+gh workflow run close-duplicates.yml
+```
 
 ### 3. Close Stale Issues (`close-stale.yml`)
 
@@ -53,53 +54,37 @@ The automation system provides:
 3. Closes issues with no activity for 7+ days
 4. Posts a closing comment explaining the inactivity
 
-### 4. Duplicate Dispute Handler (`duplicate-dispute.yml`)
-
-**Trigger:** When a comment is added to an issue
-
-**What it does:**
-1. Checks if the issue has a "duplicate" label
-2. Verifies the comment was posted after the duplicate detection
-3. Removes "duplicate" label and adds "pending-triage"
-4. Posts an acknowledgment comment
-
-### 5. Duplicate Reaction Check (`duplicate-reaction-check.yml`)
-
-**Trigger:** Hourly (scheduled)
-
-**What it does:**
-1. Scans all open issues with "duplicate" label
-2. Checks for 👎 reactions on duplicate detection comments
-3. Relabels disputed issues for maintainer review
-
-### 6. Delete Spam Comments (`delete-spam-comments.yml`)
-
-**Trigger:** When a comment is created (or manual with comment ID)
-
-**What it does:**
-1. Uses AI to semantically detect spam with dual-pass confirmation
-2. Skips org members automatically
-3. Requires 95%+ confidence from both passes
-4. Logs full audit trail for deleted comments
-
-### 7. Issue Comment (`issue-comment.yml`)
-
-**Trigger:** When a comment is added
-
-**What it does:**
-1. Removes "pending-response" when community member comments
-2. Adds "pending-maintainer-response" for community comments
-3. Removes "pending-maintainer-response" for maintainer comments
+**Manual Trigger:**
+```bash
+gh workflow run close-stale.yml
+```
 
 ## Setup Instructions
 
 ### 1. AWS Bedrock Access
 
-Ensure you have access to AWS Bedrock with Claude models:
+Ensure you have access to AWS Bedrock with the Claude Sonnet 4.5 model:
 
 1. Enable Bedrock in your AWS account
-2. Request access to Claude models
-3. Create an IAM user/role with Bedrock permissions
+2. Request access to the Claude Sonnet 4 model
+3. Create an IAM user with the following permissions:
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "bedrock:InvokeModel"
+      ],
+      "Resource": "arn:aws:bedrock:*::foundation-model/anthropic.claude-sonnet-4-*"
+    }
+  ]
+}
+```
+
+**Note:** The system uses inference profile ID `us.anthropic.claude-sonnet-4-20250514-v1:0` for cross-region routing and higher throughput.
 
 ### 2. GitHub Secrets
 
@@ -109,8 +94,7 @@ Add the following secrets to your repository:
 2. Add the following secrets:
    - `AWS_ACCESS_KEY_ID` - Your AWS access key ID
    - `AWS_SECRET_ACCESS_KEY` - Your AWS secret access key
-   - `AWS_ROLE_ARN` - (For spam detection) IAM role ARN
-   - `AWS_REGION` (Optional) - AWS region, defaults to us-east-1
+   - (Optional) `AWS_REGION` - AWS region, defaults to us-east-1
 
 ### 3. Labels
 
@@ -131,18 +115,117 @@ Create the following labels in your repository:
 **Special Labels:**
 - Autonomous agent, Inline chat, on boarding
 
+You can create labels manually or use the GitHub CLI:
+
+```bash
+gh label create "pending-triage" --color "fbca04" --description "Awaiting maintainer review"
+gh label create "duplicate" --color "cfd3d7" --description "This issue is a duplicate"
+gh label create "pending-response" --color "d4c5f9" --description "Awaiting response from issue author"
+# ... add more labels as needed
+```
+
+### 4. Install Dependencies
+
+The workflows automatically install dependencies, but for local development:
+
+```bash
+cd scripts
+npm install
+npm run build
+```
+
 ## Troubleshooting
 
-### Common Issues
+### Workflow Fails with AWS Authentication Error
 
-- **AWS Authentication Error** - Verify credentials in GitHub Secrets
-- **No Labels Applied** - Check that labels exist in the repository
-- **Duplicate Detection Not Working** - Verify Bedrock API access
-- **Rate Limiting** - Workflows include built-in rate limit handling
+**Problem:** `UnrecognizedClientException` or authentication errors
+
+**Solution:**
+1. Verify AWS credentials are correctly set in GitHub Secrets
+2. Ensure the IAM user has Bedrock permissions
+3. Check that the AWS region is correct
+
+### No Labels Are Applied
+
+**Problem:** Issues are created but no labels are added
+
+**Solution:**
+1. Check the workflow run logs for errors
+2. Verify the labels exist in the repository
+3. Ensure the Bedrock API is responding correctly
+
+### Duplicate Detection Not Working
+
+**Problem:** Duplicates are not being detected
+
+**Solution:**
+1. Check that there are existing open issues to compare against
+2. Verify AWS Bedrock access is working
+3. Review the similarity threshold (currently 0.80)
+
+### Rate Limiting Issues
+
+**Problem:** Workflows fail due to GitHub API rate limits
+
+**Solution:**
+1. The workflows include rate limit handling
+2. For high-volume repositories, consider adjusting batch sizes
+3. Check the rate limit status: `gh api rate_limit`
+
+## Monitoring
+
+### Workflow Run Summaries
+
+Each workflow generates a summary visible in the Actions tab:
+- Total issues processed
+- Success/failure counts
+- Detailed error information
+
+### Logs
+
+View detailed logs for each workflow run:
+1. Go to Actions tab
+2. Select the workflow
+3. Click on a specific run
+4. Expand the steps to see detailed logs
+
+## Customization
+
+### Adjusting Thresholds
+
+Edit the TypeScript files in `scripts/`:
+
+**Duplicate closure threshold (default: 3 days):**
+```typescript
+// In close_duplicates.ts
+const DAYS_THRESHOLD = 3;
+```
+
+**Stale issue threshold (default: 7 days):**
+```typescript
+// In close_stale.ts
+const DAYS_THRESHOLD = 7;
+```
+
+**Duplicate similarity threshold (default: 0.80):**
+```typescript
+// In detect_duplicates.ts
+const SIMILARITY_THRESHOLD = 0.8;
+```
+
+### Modifying Schedules
+
+Edit the cron expressions in the workflow files:
+
+```yaml
+on:
+  schedule:
+    - cron: "0 0 * * *"  # Daily at midnight UTC
+```
 
 ## Support
 
 For issues or questions:
-1. Check the workflow run logs in the Actions tab
-2. Review the troubleshooting section above
+1. Check the workflow run logs
+2. Review the troubleshooting section
 3. Open an issue in the repository

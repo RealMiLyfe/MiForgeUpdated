@@ -36,7 +36,6 @@ coverage/
 *.tmp
 *.temp
 .cache/
-
 # Documentation files not for check-in
 .github/*.md
 !.github/workflows/README.md

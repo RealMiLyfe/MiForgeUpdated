@@ -8,9 +8,14 @@ body:
         ---
         ## ⚠️ Before you open this issue
 
-        **Please ensure you're using the latest version of MiForge.** Use the [download links](https://miforge.dev/downloads/) to install or upgrade.
+        **Please ensure you're using the latest version of MiForge.** If you're an existing user or have been invited off the waitlist, use the [download links](https://miforge.dev/downloads/) to install or upgrade. Otherwise, join the [waitlist](https://miforge.dev/waitlist/) to get access.
 
-        **Check if your issue is already known.** If so, **subscribe and comment to existing issues for updates** instead of opening a new one.
+        **Check if your issue is already known.** If so, **subscribe and comment to the following issues for updates** instead of opening a new one:
+
+        [#195: Support for multi-root workspaces](https://github.com/RealMiLyfe/MiForgeUpdated/issues/195)
+        [#194: Generate Commit Message" button for MiForge's Git integration](https://github.com/RealMiLyfe/MiForgeUpdated/issues/194)
+        [#87: Remote SSH login issues](https://github.com/RealMiLyfe/MiForgeUpdated/issues/87)
+        [#31: Provide a token counter in the chat window](https://github.com/RealMiLyfe/MiForgeUpdated/issues/31)
 
         Thank you for helping us keep our issue tracker organized.
 

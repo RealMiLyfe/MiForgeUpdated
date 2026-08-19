@@ -1,7 +1,6 @@
 /**
  * Workflow Summary Utilities
  * Generate summaries for GitHub Actions workflow runs
- * MiForge Issue Automation
  */
 
 import * as fs from "fs";
@@ -30,7 +29,7 @@ export function createSummary(summary: WorkflowSummary): void {
     return;
   }
 
-  let content = `## MiForge Workflow Summary\n\n`;
+  let content = `## Workflow Summary\n\n`;
   content += `**Status:** ${summary.success ? "✅ Success" : "❌ Failed"}\n\n`;
   content += `### Statistics\n\n`;
   content += `- Total Processed: ${summary.totalProcessed}\n`;

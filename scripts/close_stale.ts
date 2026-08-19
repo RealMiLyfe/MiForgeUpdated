@@ -1,7 +1,6 @@
 /**
  * Stale Issue Handler Script
  * Closes issues with pending-response label for 7+ days without activity
- * MiForge Issue Automation
  */
 
 import { Octokit } from "@octokit/rest";
@@ -19,6 +18,7 @@ async function getLastActivityDate(
   issueNumber: number
 ): Promise<Date | null> {
   try {
+    // Get comments
     const { data: comments } = await client.issues.listComments({
       owner,
       repo,
@@ -28,6 +28,7 @@ async function getLastActivityDate(
       direction: "desc",
     });
 
+    // Get timeline events (for label changes)
     const { data: events } = await client.issues.listEvents({
       owner,
       repo,
@@ -37,15 +38,18 @@ async function getLastActivityDate(
 
     const dates: Date[] = [];
 
+    // Add comment dates
     if (comments.length > 0) {
       dates.push(new Date(comments[0].created_at));
     }
 
+    // Add label event dates
     const labelEvents = events.filter((event) => event.event === "labeled" || event.event === "unlabeled");
     if (labelEvents.length > 0) {
       dates.push(new Date(labelEvents[labelEvents.length - 1].created_at));
     }
 
+    // Return most recent date
     if (dates.length > 0) {
       return new Date(Math.max(...dates.map((d) => d.getTime())));
     }
@@ -77,6 +81,7 @@ async function getPendingResponseLabelDate(
       per_page: 100,
     });
 
+    // Find the most recent "labeled" event for "pending-response" label
     const labelEvent = events
       .filter(
         (event) =>
@@ -114,6 +119,7 @@ async function closeStaleIssue(
 
 If you still need help with this issue, please feel free to reopen it or create a new issue with the requested details.`;
 
+    // Post closing comment
     await retryWithBackoff(async () => {
       await client.issues.createComment({
         owner,
@@ -123,6 +129,7 @@ If you still need help with this issue, please feel free to reopen it or create 
       });
     });
 
+    // Close the issue
     await retryWithBackoff(async () => {
       await client.issues.update({
         owner,
@@ -154,11 +161,12 @@ async function main() {
       process.exit(1);
     }
 
-    console.log(`\n=== MiForge: Closing Stale Issues ===`);
+    console.log(`\n=== Closing Stale Issues ===`);
     console.log(`Repository: ${owner}/${repo}\n`);
 
     const client = new Octokit({ auth: githubToken });
 
+    // Fetch all open issues with pending-response label
     const { data: issues } = await client.issues.listForRepo({
       owner,
       repo,
@@ -182,6 +190,7 @@ async function main() {
     for (const issue of issues) {
       console.log(`\nProcessing issue #${issue.number}: ${issue.title}`);
 
+      // Check if issue still has pending-response label
       const hasPendingResponseLabel = issue.labels.some(
         (label) =>
           (typeof label === "string" ? label : label.name) === "pending-response"
@@ -193,6 +202,7 @@ async function main() {
         continue;
       }
 
+      // Get label date
       const labelDate = await getPendingResponseLabelDate(
         client,
         owner,
@@ -206,6 +216,7 @@ async function main() {
         continue;
       }
 
+      // Get last activity date
       const lastActivityDate = await getLastActivityDate(
         client,
         owner,
@@ -213,6 +224,7 @@ async function main() {
         issue.number
       );
 
+      // Use the most recent date (label date or last activity)
       const referenceDate = lastActivityDate && lastActivityDate > labelDate
         ? lastActivityDate
         : labelDate;
@@ -223,6 +235,7 @@ async function main() {
       console.log(`  Inactive for: ${inactiveDays.toFixed(1)} days`);
 
       if (inactiveMs >= thresholdMs) {
+        // Close the issue
         const closed = await closeStaleIssue(
           client,
           owner,

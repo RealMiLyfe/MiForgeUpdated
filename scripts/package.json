@@ -1,7 +1,7 @@
 {
   "name": "miforge-issue-automation",
   "version": "1.0.0",
-  "description": "Automated GitHub issue management for MiForge with AWS Bedrock",
+  "description": "Automated GitHub issue management with AWS Bedrock",
   "type": "module",
   "scripts": {
     "build": "tsc",

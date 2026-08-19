@@ -41,6 +41,6 @@ jobs:
       - name: Create workflow summary
         if: always()
         run: |
-          echo "## MiForge Duplicate Closer Summary" >> $GITHUB_STEP_SUMMARY
+          echo "## Duplicate Closer Summary" >> $GITHUB_STEP_SUMMARY
           echo "Status: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
           echo "Run time: $(date)" >> $GITHUB_STEP_SUMMARY

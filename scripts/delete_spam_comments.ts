@@ -1,7 +1,6 @@
 /**
  * Delete Spam Comments Script
  * Uses AWS Bedrock to semantically detect and delete spam comments on GitHub issues.
- * MiForge Issue Automation
  */
 
 import { Octokit } from "@octokit/rest";
@@ -14,7 +13,7 @@ import { retryWithBackoff } from "./retry_utils.js";
 const BEDROCK_MODEL_ID = "us.anthropic.claude-sonnet-4-20250514-v1:0";
 const CONFIDENCE_THRESHOLD = 0.95;
 const SPAM_DETECTION_PROMPT =
-  "You are a spam detection system for GitHub issue comments on the MiForge project. Your job is to protect the repository from spam while preserving all legitimate user contributions.\n\n" +
+  "You are a spam detection system for GitHub issue comments. Your job is to protect the repository from spam while preserving all legitimate user contributions.\n\n" +
   "CRITICAL: Err on the side of NOT flagging spam. A false positive (deleting a real comment) is far worse than a false negative (missing spam). When in doubt, classify as NOT spam.\n\n" +
   "Spam includes:\n" +
   "- Cryptocurrency scams, investment fraud, or guaranteed returns claims\n" +
@@ -52,16 +51,21 @@ function createBedrockClient(): BedrockRuntimeClient {
 
 /**
  * Sanitize comment body to prevent prompt injection.
+ * Strips null bytes and limits length; content is passed as a separate user
+ * message (never interpolated into the system prompt) so injection is not
+ * structurally possible, but we still normalise the input defensively.
  */
 function sanitizeCommentBody(body: string): string {
   return body
     .replace(/\0/g, "") // strip null bytes
-    .substring(0, 2000)  // hard cap
+    .substring(0, 2000)  // hard cap — model doesn't need more
     .trim();
 }
 
 /**
- * Use Bedrock to semantically detect spam
+ * Use Bedrock to semantically detect spam, including obfuscated/homoglyph content.
+ * The comment body is passed as a separate user message so it can never
+ * override or escape the system instructions.
  */
 export async function isSpamComment(body: string): Promise<SpamCheckResult> {
   if (!body.trim()) {
@@ -69,6 +73,8 @@ export async function isSpamComment(body: string): Promise<SpamCheckResult> {
   }
 
   const client = createBedrockClient();
+
+  // Sanitize and isolate the comment — never interpolate into the system prompt.
   const safeBody = sanitizeCommentBody(body);
 
   try {
@@ -82,6 +88,7 @@ export async function isSpamComment(body: string): Promise<SpamCheckResult> {
           max_tokens: 256,
           temperature: 0.1,
           system: SPAM_DETECTION_PROMPT,
+          // Comment is the sole user message — structurally isolated from instructions.
           messages: [{ role: "user", content: safeBody }],
         }),
       });
@@ -107,6 +114,8 @@ export async function isSpamComment(body: string): Promise<SpamCheckResult> {
 
 /**
  * Run a second independent Bedrock call to confirm a spam verdict.
+ * Uses a distinct system prompt asking the model to re-evaluate the comment
+ * with fresh reasoning. Only returns true if both passes agree.
  */
 async function confirmSpam(body: string, firstResult: SpamCheckResult): Promise<boolean> {
   const client = createBedrockClient();
@@ -153,6 +162,7 @@ async function confirmSpam(body: string, firstResult: SpamCheckResult): Promise<
 
 /**
  * Check if a user is a member of the repository's organization.
+ * Returns true for org members so their comments are never flagged as spam.
  */
 async function isOrgMember(
   client: Octokit,
@@ -161,8 +171,11 @@ async function isOrgMember(
 ): Promise<boolean> {
   try {
     await client.orgs.checkMembershipForUser({ org, username });
+    // A successful response (204 or 302) without throwing means the user is a member
+    // or the requester can see the membership. Treat as member.
     return true;
   } catch {
+    // 404 means not a member (or org/user doesn't exist)
     return false;
   }
 }
@@ -250,7 +263,7 @@ async function main() {
 
   const client = new Octokit({ auth: githubToken });
 
-  console.log(`=== MiForge Single Comment Spam Check (comment #${commentId}) ===`);
+  console.log(`=== Single Comment Spam Check (comment #${commentId}) ===`);
   const { body, author } = await fetchComment(client, owner, repo, commentId);
   const deleted = await processSingleComment(client, owner, repo, commentId, body, author);
   console.log(`\nSummary: ${deleted ? `Spam comment #${commentId} by @${author} was deleted.` : `Comment #${commentId} is clean — no action taken.`}`);

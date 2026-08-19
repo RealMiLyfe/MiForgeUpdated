@@ -1,7 +1,6 @@
 /**
  * Label Assignment Module
  * Assigns labels to GitHub issues with validation
- * MiForge Issue Automation
  */
 
 import { Octokit } from "@octokit/rest";

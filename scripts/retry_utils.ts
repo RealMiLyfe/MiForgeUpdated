@@ -1,6 +1,5 @@
 /**
  * Retry utilities with exponential backoff
- * MiForge Issue Automation
  */
 
 export interface RetryOptions {

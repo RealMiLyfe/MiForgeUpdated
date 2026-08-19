@@ -1,81 +1,57 @@
 <div align="center">
 
-  ![MiLyfe : MiForge](assets/miforge-banner.svg)
+  <img src="assets/miforge-logo.png" alt="MiLyfe : MiForge" width="600">
 
-  [<img alt="Discord" src="https://img.shields.io/discord/1374034175430230016?style=flat&logo=discord&logoColor=white&label=discord&color=%230a6e5c" />](https://discord.gg/milyfe)
-  ![TypeScript](https://img.shields.io/badge/TypeScript-5.3-blue?logo=typescript&logoColor=white)
-  ![AWS Bedrock](https://img.shields.io/badge/AWS%20Bedrock-Claude-orange?logo=amazon&logoColor=white)
-  ![GitHub Actions](https://img.shields.io/badge/Actions-Automated-brightgreen?logo=github&logoColor=white)
-  ![License](https://img.shields.io/badge/license-Proprietary-red)
+  <br/><br/>
+
+  **Spec-Driven AI Development — From Prototype to Production**
+
+  [<img alt="Discord" src="https://img.shields.io/discord/1374034175430230016?style=for-the-badge&logo=discord&logoColor=white&label=COMMUNITY&color=%230a6e5c" />](https://discord.gg/milyfe)
+  &nbsp;
+  [<img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-5.3+-blue?style=for-the-badge&logo=typescript&logoColor=white" />](#)
+  &nbsp;
+  [<img alt="Platform" src="https://img.shields.io/badge/macOS%20%7C%20Windows%20%7C%20Linux-grey?style=for-the-badge&logo=apple&logoColor=white" />](#)
 
 </div>
 
 ---
 
-## 🚀 What is MiForge?
+## What is MiForge?
 
-MiForge is an agentic IDE and command-line interface by **MiLyfe** that helps you go from prototype to production with spec-driven development, agent hooks, powers, and natural language coding assistance. Build faster with AI-powered features that understand your entire codebase, turn prompts into structured specs, and automate repetitive tasks.
+MiForge is an agentic IDE and command-line interface that helps you go from prototype to production with spec-driven development, agent hooks, powers, and natural language coding assistance. Build faster with AI-powered features that understand your entire codebase, turn prompts into structured specs, and automate repetitive tasks.
 
 ---
 
 ## ✨ Core Capabilities
 
-| Feature | Description |
-|---------|-------------|
-| 📋 **Specs** | Plan and build features using structured specifications that break down requirements into implementation plans |
-| ⚡ **Hooks** | Automate repetitive tasks with intelligent triggers that respond to file changes and events |
-| 💬 **Agentic Chat** | Build features through natural conversation with MiForge that understands your project |
-| 🎯 **Steering** | Guide MiForge's behavior with custom rules and project-specific context |
-| 🔌 **MCP Servers** | Connect external tools and data sources through the Model Context Protocol |
-| 🔮 **Powers** | Specialized context and tools for agents on-demand with domain-specific knowledge |
-| 🔒 **Privacy First** | Enterprise-grade security and privacy for your code |
+| | Feature | Description |
+|---|---------|-------------|
+| 📋 | **Specs** | Plan and build features using structured specifications that break down requirements into detailed implementation plans |
+| ⚡ | **Hooks** | Automate repetitive tasks with intelligent triggers that respond to file changes and development events |
+| 💬 | **Agentic Chat** | Build features through natural conversation with MiForge that understands your project context |
+| 🎯 | **Steering** | Guide MiForge's behavior with custom rules and project-specific context through markdown files |
+| 🔌 | **MCP Servers** | Connect external tools and data sources through the Model Context Protocol |
+| 🔮 | **Powers** | Specialized context and tools for MiForge agents on-demand. Extend agent capabilities with domain-specific knowledge and custom integrations |
+| 🔒 | **Privacy First** | Keep your code secure with enterprise-grade security and privacy |
 
 ---
 
-## 📸 Live Preview
-
-### AI-Powered Issue Triage
-
-When a new issue is opened, MiForge's AI automatically classifies it, assigns labels, and posts an acknowledgment:
-
-![AI Issue Triage](assets/feature-triage.svg)
-
----
-
-### Automated Workflow Dashboard
-
-All automation workflows running continuously to keep your issue tracker clean:
-
-![Workflow Dashboard](assets/feature-workflows.svg)
-
----
-
-### Spec-Driven Development
-
-Structure your features with formal requirements, design documents, and tracked implementation tasks:
-
-![Spec-Driven Development](assets/feature-specs.svg)
-
----
-
-## 🛠️ Available Interfaces
+## 🖥️ Available Interfaces
 
 ### MiForge IDE (Desktop Application)
-
 The standalone desktop application is available for:
-- 🍎 **macOS** — Intel & Apple Silicon
-- 🪟 **Windows** — x64
-- 🐧 **Linux** — x64 & ARM
+- 🍎 macOS
+- 🪟 Windows
+- 🐧 Linux
 
 ### MiForge CLI
-
 Command-line interface for integrating MiForge into your development workflows and automation scripts.
 
 For detailed information on both interfaces, visit [miforge.dev](https://miforge.dev)
 
 ---
 
-## 🚦 Getting Started
+## 🚀 Getting Started
 
 ### Download & Install
 
@@ -85,45 +61,31 @@ For detailed information on both interfaces, visit [miforge.dev](https://miforge
 
 ### First Project
 
-Get started with MiForge by following our comprehensive **[first project guide](https://miforge.dev/docs/getting-started/first-project/)**:
+Get started with MiForge by following our comprehensive **[first project guide](https://miforge.dev/docs/getting-started/first-project/)**. This hands-on tutorial walks you through MiForge's essential features.
 
-- 📝 Setting up steering files for project-specific guidance
-- 📋 Creating and managing specs for structured development
-- ⚡ Configuring hooks to automate your workflow
-- 🔌 Connecting MCP servers for external integrations
+**What you'll learn:**
+- Setting up steering files for project-specific guidance
+- Creating and managing specs for structured development
+- Configuring hooks to automate your workflow
+- Connecting MCP servers for external integrations
 
 ### One-Click Migration
 Import your VS Code setup including extensions and settings during the initial setup process.
 
 ---
 
-## 🤖 Issue Automation Architecture
+## 🤖 AI-Powered Issue Automation
 
-MiForge includes a complete AI-powered issue management system:
-
-```mermaid
-graph LR
-    A[New Issue] --> B[🤖 Bedrock Classifier]
-    B --> C[🏷️ Auto-Label]
-    B --> D[🔍 Duplicate Check]
-    D --> E{Duplicate?}
-    E -->|Yes| F[Mark & Notify]
-    E -->|No| G[💬 Acknowledge]
-    
-    H[Daily Cron] --> I[Close Stale 7d+]
-    H --> J[Close Dupes 3d+]
-    
-    K[Comment Created] --> L[🛡️ Spam Detection]
-```
+This repository includes a complete automated issue management system powered by AWS Bedrock:
 
 | Workflow | Trigger | What It Does |
 |----------|---------|-------------|
-| **Issue Triage** | Issue opened | AI classifies, labels, detects dupes, posts comment |
+| **Issue Triage** | Issue opened | AI classifies, labels, detects duplicates, posts acknowledgment |
 | **Close Duplicates** | Daily cron | Closes confirmed dupes after 3-day grace period |
 | **Close Stale** | Daily cron | Closes inactive issues after 7 days |
-| **Spam Detection** | Comment created | Dual-pass AI verification, deletes with 95%+ confidence |
-| **Dispute Handler** | Comment on dupe | Relabels issue for maintainer review |
-| **Reaction Check** | Hourly | Checks 👎 reactions on dupe comments |
+| **Spam Detection** | Comment created | Dual-pass AI verification, 95%+ confidence required |
+| **Dispute Handler** | Comment on dupe | Relabels disputed issues for maintainer review |
+| **Reaction Check** | Hourly | Checks 👎 reactions on duplicate detection comments |
 
 ---
 
@@ -131,11 +93,13 @@ graph LR
 
 **[📚 View Documentation →](https://miforge.dev/docs/)**
 
-- [Getting Started](https://miforge.dev/docs/getting-started) — Installation and first project setup
-- [IDE Guide](https://miforge.dev/docs/) — Desktop application features and workflows
-- [CLI Guide](https://miforge.dev/docs/cli) — Command-line interface usage and automation
-- [Scripts README](scripts/README.md) — Automation scripts API documentation
-- [Workflows README](.github/workflows/README.md) — GitHub Actions setup guide
+| | Guide | Description |
+|---|-------|-------------|
+| 🏁 | [Getting Started](https://miforge.dev/docs/getting-started) | Installation and first project setup for IDE and CLI |
+| 🖥️ | [IDE Guide](https://miforge.dev/docs/) | Desktop application features and workflows |
+| ⌨️ | [CLI Guide](https://miforge.dev/docs/cli) | Command-line interface usage and automation |
+| ⚙️ | [Scripts](scripts/README.md) | Automation scripts API documentation |
+| 🔄 | [Workflows](.github/workflows/README.md) | GitHub Actions setup and configuration |
 
 ---
 
@@ -153,9 +117,9 @@ We welcome feedback and issue reports to help improve MiForge. Please use this r
 
 | Channel | Purpose |
 |---------|---------|
-| [Discord](https://discord.gg/milyfe) | Community help & discussions |
-| [MiLyfe Support](https://support.milyfe.com/) | Technical assistance |
-| [Billing Support](https://support.milyfe.com/billing) | Billing-related questions |
+| [Discord Community](https://discord.gg/milyfe) | Quick help and discussions with other developers |
+| [MiLyfe Billing Support](https://support.milyfe.com/billing) | Billing-related questions |
+| [MiLyfe Support](https://support.milyfe.com/) | Technical issues and general assistance |
 
 ---
 
@@ -172,6 +136,10 @@ opensource@milyfe.com with any additional questions or comments.
 ---
 
 <div align="center">
+
+  <img src="assets/miforge-logo.png" alt="MiLyfe : MiForge" width="200">
+
+  <br/>
 
   **Built with 🔨 by MiLyfe**
 

@@ -1,7 +1,6 @@
 /**
  * Duplicate Closer Script
  * Closes issues marked as duplicate for 3+ days
- * MiForge Issue Automation
  */
 
 import { Octokit } from "@octokit/rest";
@@ -33,6 +32,7 @@ async function getDuplicateLabelDate(
       per_page: 100,
     });
 
+    // Find the most recent "labeled" event for "duplicate" label
     const labelEvent = events
       .filter(
         (event) =>
@@ -73,6 +73,7 @@ async function findOriginalIssueAndCheckResponses(
       per_page: 100,
     });
 
+    // Look for our duplicate detection comment
     const duplicateComment = comments.find((comment) =>
       comment.body?.includes("Potential Duplicate Detected")
     );
@@ -83,12 +84,14 @@ async function findOriginalIssueAndCheckResponses(
 
     let originalIssue: number | null = null;
     if (duplicateComment.body) {
+      // Extract first issue number from the comment
       const match = duplicateComment.body.match(/#(\d+):/);
       if (match) {
         originalIssue = parseInt(match[1]);
       }
     }
 
+    // Check for user responses after the duplicate comment
     const duplicateCommentDate = new Date(duplicateComment.created_at);
     const hasCommentAfter = comments.some(
       (comment) =>
@@ -101,6 +104,7 @@ async function findOriginalIssueAndCheckResponses(
       return { originalIssue, hasUserResponse: true };
     }
 
+    // Check for 👎 reactions on the duplicate comment
     try {
       const { data: reactions } = await client.reactions.listForIssueComment({
         owner,
@@ -119,6 +123,7 @@ async function findOriginalIssueAndCheckResponses(
       }
     } catch (error) {
       console.error(`  Error checking reactions:`, error);
+      // Continue without reaction check
     }
 
     return { originalIssue, hasUserResponse: false };
@@ -141,6 +146,7 @@ async function relabelIssue(
   issueNumber: number
 ): Promise<boolean> {
   try {
+    // Remove duplicate label
     await retryWithBackoff(async () => {
       await client.issues.removeLabel({
         owner,
@@ -152,6 +158,7 @@ async function relabelIssue(
 
     console.log(`  ✓ Removed 'duplicate' label`);
 
+    // Add pending-triage label
     await retryWithBackoff(async () => {
       await client.issues.addLabels({
         owner,
@@ -186,6 +193,7 @@ async function closeDuplicateIssue(
 
 If you believe this is incorrect, please comment on this issue and a maintainer will review it.`;
 
+    // Post closing comment
     await retryWithBackoff(async () => {
       await client.issues.createComment({
         owner,
@@ -195,6 +203,7 @@ If you believe this is incorrect, please comment on this issue and a maintainer 
       });
     });
 
+    // Close the issue
     await retryWithBackoff(async () => {
       await client.issues.update({
         owner,
@@ -226,11 +235,12 @@ async function main() {
       process.exit(1);
     }
 
-    console.log(`\n=== MiForge: Closing Duplicate Issues ===`);
+    console.log(`\n=== Closing Duplicate Issues ===`);
     console.log(`Repository: ${owner}/${repo}\n`);
 
     const client = new Octokit({ auth: githubToken });
 
+    // Fetch all open issues with duplicate label
     const { data: issues } = await client.issues.listForRepo({
       owner,
       repo,
@@ -255,6 +265,7 @@ async function main() {
     for (const issue of issues) {
       console.log(`\nProcessing issue #${issue.number}: ${issue.title}`);
 
+      // Check if issue still has duplicate label
       const hasDuplicateLabel = issue.labels.some(
         (label) =>
           (typeof label === "string" ? label : label.name) === "duplicate"
@@ -266,6 +277,7 @@ async function main() {
         continue;
       }
 
+      // Get label date
       const labelDate = await getDuplicateLabelDate(
         client,
         owner,
@@ -285,6 +297,7 @@ async function main() {
       console.log(`  Label age: ${ageDays.toFixed(1)} days`);
 
       if (ageMs >= thresholdMs) {
+        // Find original issue and check for user responses
         const { originalIssue, hasUserResponse } =
           await findOriginalIssueAndCheckResponses(
             client,
@@ -296,6 +309,7 @@ async function main() {
         if (hasUserResponse) {
           console.log(`  User responded - relabeling issue`);
           
+          // Remove duplicate label and add pending-triage
           const relabeled = await relabelIssue(
             client,
             owner,
@@ -313,6 +327,7 @@ async function main() {
           continue;
         }
 
+        // Close the issue
         const closed = await closeDuplicateIssue(
           client,
           owner,

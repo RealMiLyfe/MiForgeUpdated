@@ -1,7 +1,6 @@
 /**
  * Main Issue Triage Script
  * Orchestrates classification, labeling, and duplicate detection
- * MiForge Issue Automation
  */
 
 import { Octokit } from "@octokit/rest";
@@ -102,7 +101,7 @@ async function main() {
       process.exit(1);
     }
 
-    console.log(`\n=== MiForge: Triaging Issue #${issueNumber} ===`);
+    console.log(`\n=== Triaging Issue #${issueNumber} ===`);
     console.log(`Title: ${issueTitle}`);
     console.log(`Repository: ${owner}/${repo}\n`);
 
@@ -127,6 +126,7 @@ async function main() {
         console.log(`Found ${duplicates.length} potential duplicate(s)`);
         isDuplicate = true;
 
+        // Post duplicate comment
         console.log("\nStep 2: Posting duplicate comment...");
         try {
           const commentPosted = await postDuplicateComment(
@@ -138,6 +138,7 @@ async function main() {
           );
 
           if (commentPosted) {
+            // Add duplicate label (and remove pending-triage)
             console.log("\nStep 3: Adding duplicate label...");
             try {
               await addDuplicateLabel(owner, repo, issueNumber, githubToken);
@@ -224,10 +225,11 @@ async function main() {
       } catch (error) {
         console.error("Failed to post acknowledgment comment:", error);
         logError(summary.errors, "acknowledgment_comment", error, issueNumber);
+        // Continue even if comment fails
       }
     }
 
-    console.log("\n=== MiForge Triage Complete ===\n");
+    console.log("\n=== Triage Complete ===\n");
 
     // Update summary
     if (summary.errors.length === 0) {
@@ -240,7 +242,7 @@ async function main() {
     createSummary(summary);
     process.exit(summary.success ? 0 : 1);
   } catch (error) {
-    console.error("\n=== MiForge Triage Failed ===");
+    console.error("\n=== Triage Failed ===");
     console.error("Error:", error);
     logError(summary.errors, "main", error);
     summary.success = false;
