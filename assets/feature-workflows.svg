@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 400" width="800" height="400">
+  <defs>
+    <linearGradient id="wfGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#1a237e;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#0d8a6e;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Window frame -->
+  <rect width="800" height="400" fill="#0d1117" rx="12"/>
+  <rect y="0" width="800" height="36" fill="#161b22" rx="12"/>
+  <rect y="18" width="800" height="18" fill="#161b22"/>
+  
+  <!-- Window controls -->
+  <circle cx="20" cy="18" r="6" fill="#ff5f56"/>
+  <circle cx="40" cy="18" r="6" fill="#ffbd2e"/>
+  <circle cx="60" cy="18" r="6" fill="#27c93f"/>
+  
+  <text x="400" y="23" font-family="system-ui, sans-serif" font-size="12" fill="#8b949e" text-anchor="middle">GitHub Actions — MiForge Automation Workflows</text>
+  
+  <!-- Workflow list -->
+  <text x="30" y="65" font-family="system-ui, sans-serif" font-size="16" font-weight="bold" fill="#e6edf3">Active Workflows</text>
+  
+  <!-- Workflow 1 -->
+  <rect x="24" y="78" width="752" height="44" rx="6" fill="#161b22"/>
+  <circle cx="44" cy="100" r="8" fill="#238636"/>
+  <text x="44" y="104" font-family="system-ui, sans-serif" font-size="10" fill="white" text-anchor="middle">✓</text>
+  <text x="62" y="96" font-family="system-ui, sans-serif" font-size="13" font-weight="600" fill="#e6edf3">MiForge Issue Triage</text>
+  <text x="62" y="112" font-family="monospace" font-size="10" fill="#8b949e">Triggered on: issues.opened • Last run: 2m ago</text>
+  <rect x="680" y="90" width="80" height="20" rx="10" fill="#238636" opacity="0.2"/>
+  <text x="720" y="104" font-family="system-ui, sans-serif" font-size="10" fill="#3fb950" text-anchor="middle">Success</text>
+  
+  <!-- Workflow 2 -->
+  <rect x="24" y="130" width="752" height="44" rx="6" fill="#161b22"/>
+  <circle cx="44" cy="152" r="8" fill="#238636"/>
+  <text x="44" y="156" font-family="system-ui, sans-serif" font-size="10" fill="white" text-anchor="middle">✓</text>
+  <text x="62" y="148" font-family="system-ui, sans-serif" font-size="13" font-weight="600" fill="#e6edf3">Close Duplicate Issues</text>
+  <text x="62" y="164" font-family="monospace" font-size="10" fill="#8b949e">Scheduled: Daily at 00:00 UTC • Last run: 4h ago • Closed: 3 issues</text>
+  <rect x="680" y="142" width="80" height="20" rx="10" fill="#238636" opacity="0.2"/>
+  <text x="720" y="156" font-family="system-ui, sans-serif" font-size="10" fill="#3fb950" text-anchor="middle">Success</text>
+  
+  <!-- Workflow 3 -->
+  <rect x="24" y="182" width="752" height="44" rx="6" fill="#161b22"/>
+  <circle cx="44" cy="204" r="8" fill="#238636"/>
+  <text x="44" y="208" font-family="system-ui, sans-serif" font-size="10" fill="white" text-anchor="middle">✓</text>
+  <text x="62" y="200" font-family="system-ui, sans-serif" font-size="13" font-weight="600" fill="#e6edf3">Close Stale Issues</text>
+  <text x="62" y="216" font-family="monospace" font-size="10" fill="#8b949e">Scheduled: Daily at 00:00 UTC • Last run: 4h ago • Closed: 1 issue</text>
+  <rect x="680" y="194" width="80" height="20" rx="10" fill="#238636" opacity="0.2"/>
+  <text x="720" y="208" font-family="system-ui, sans-serif" font-size="10" fill="#3fb950" text-anchor="middle">Success</text>
+  
+  <!-- Workflow 4 -->
+  <rect x="24" y="234" width="752" height="44" rx="6" fill="#161b22"/>
+  <circle cx="44" cy="256" r="8" fill="#238636"/>
+  <text x="44" y="260" font-family="system-ui, sans-serif" font-size="10" fill="white" text-anchor="middle">✓</text>
+  <text x="62" y="252" font-family="system-ui, sans-serif" font-size="13" font-weight="600" fill="#e6edf3">Delete Spam Comments</text>
+  <text x="62" y="268" font-family="monospace" font-size="10" fill="#8b949e">Triggered on: issue_comment.created • Last run: 15m ago</text>
+  <rect x="680" y="246" width="80" height="20" rx="10" fill="#238636" opacity="0.2"/>
+  <text x="720" y="260" font-family="system-ui, sans-serif" font-size="10" fill="#3fb950" text-anchor="middle">Success</text>
+  
+  <!-- Workflow 5 -->
+  <rect x="24" y="286" width="752" height="44" rx="6" fill="#161b22"/>
+  <circle cx="44" cy="308" r="8" fill="#238636"/>
+  <text x="44" y="312" font-family="system-ui, sans-serif" font-size="10" fill="white" text-anchor="middle">✓</text>
+  <text x="62" y="304" font-family="system-ui, sans-serif" font-size="13" font-weight="600" fill="#e6edf3">Duplicate Reaction Check</text>
+  <text x="62" y="320" font-family="monospace" font-size="10" fill="#8b949e">Scheduled: Hourly • Last run: 25m ago • Relabeled: 0 issues</text>
+  <rect x="680" y="298" width="80" height="20" rx="10" fill="#238636" opacity="0.2"/>
+  <text x="720" y="312" font-family="system-ui, sans-serif" font-size="10" fill="#3fb950" text-anchor="middle">Success</text>
+  
+  <!-- Stats bar -->
+  <rect x="24" y="345" width="752" height="40" rx="8" fill="#0d2818" stroke="#238636" stroke-width="1"/>
+  <text x="44" y="370" font-family="system-ui, sans-serif" font-size="12" fill="#3fb950">📊 Last 30 days: 142 issues triaged • 23 duplicates closed • 8 stale closed • 5 spam removed</text>
+</svg>
