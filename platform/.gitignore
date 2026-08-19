@@ -1,0 +1,35 @@
+# Build
+dist/
+*.tsbuildinfo
+
+# Dependencies
+node_modules/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.eggs/
+build/
+*.whl
+
+# Environment
+.env
+.env.local
+
+# Runtime
+*.log
+.cache/
+coverage/
+
+# Docker
+*.pid
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/

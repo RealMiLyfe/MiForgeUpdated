@@ -108,7 +108,9 @@ export class SafetyGateway {
   }
 
   /**
-   * Request human approval for a blocked action
+   * Request human approval for a blocked action.
+   * Sends Telegram notification and polls for YES/NO response.
+   * Times out after approvalTimeoutMs (default 5 min) → auto-deny.
    */
   async requestApproval(gate: Gate, reason: string, action: string): Promise<boolean> {
     // Dev mode: auto-approve certain gates
@@ -126,19 +128,25 @@ export class SafetyGateway {
       `Reply YES to approve, NO to block.`,
     ].join('\n');
 
-    // Notify via Telegram
+    // Notify via Telegram + poll for response
     if (this.config.telegramBotToken && this.config.telegramChatId) {
-      await this.sendTelegram(message);
-    } else {
-      // Console fallback
-      console.log('\n' + '═'.repeat(60));
-      console.log(message);
-      console.log('═'.repeat(60) + '\n');
+      const sentMsg = await this.sendTelegram(message);
+      if (sentMsg) {
+        const approved = await this.pollTelegramResponse(sentMsg.messageId);
+        this.logDecision(gate, reason, action, approved, 'human');
+        await this.persistAuditLog();
+        return approved;
+      }
     }
 
-    // In real implementation: wait for response with timeout
-    // For now: log and return false (safe default = deny)
-    this.logDecision(gate, reason, action, false, 'human');
+    // Console fallback (for dev/CI environments without Telegram)
+    console.log('\n' + '═'.repeat(60));
+    console.log(message);
+    console.log('═'.repeat(60));
+    console.log('[Safety] No Telegram configured — auto-denying (safe default)\n');
+
+    this.logDecision(gate, reason, action, false, 'auto');
+    await this.persistAuditLog();
     return false;
   }
 
@@ -181,10 +189,10 @@ export class SafetyGateway {
     });
   }
 
-  private async sendTelegram(message: string): Promise<void> {
+  private async sendTelegram(message: string): Promise<{ messageId: number } | null> {
     const url = `https://api.telegram.org/bot${this.config.telegramBotToken}/sendMessage`;
     try {
-      await fetch(url, {
+      const res = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -193,9 +201,70 @@ export class SafetyGateway {
           parse_mode: 'Markdown',
         }),
       });
+      if (res.ok) {
+        const data = await res.json() as { result: { message_id: number } };
+        return { messageId: data.result.message_id };
+      }
     } catch (err) {
       console.error('[Safety] Telegram notification failed:', err);
     }
+    return null;
+  }
+
+  /**
+   * Poll Telegram for a YES/NO reply after our message.
+   * Checks every 5s for up to approvalTimeoutMs.
+   */
+  private async pollTelegramResponse(afterMessageId: number): Promise<boolean> {
+    const timeout = this.config.approvalTimeoutMs || 300_000;
+    const interval = 5_000; // 5s polling
+    const start = Date.now();
+    let offset = 0;
+
+    while (Date.now() - start < timeout) {
+      try {
+        const url = `https://api.telegram.org/bot${this.config.telegramBotToken}/getUpdates?offset=${offset}&timeout=4`;
+        const res = await fetch(url);
+        if (!res.ok) break;
+
+        const data = await res.json() as { result: { update_id: number; message?: { text?: string; chat?: { id: number }; message_id: number } }[] };
+
+        for (const update of data.result || []) {
+          offset = update.update_id + 1;
+          const msg = update.message;
+          if (!msg || !msg.text) continue;
+          if (String(msg.chat?.id) !== this.config.telegramChatId) continue;
+          if (msg.message_id <= afterMessageId) continue;
+
+          const text = msg.text.trim().toUpperCase();
+          if (text === 'YES') return true;
+          if (text === 'NO') return false;
+        }
+      } catch { /* network error — continue polling */ }
+
+      await new Promise(r => setTimeout(r, interval));
+    }
+
+    // Timeout = deny (safe default)
+    console.log('[Safety] Telegram approval timed out — denying.');
+    return false;
+  }
+
+  /**
+   * Persist audit log to disk (JSON lines format)
+   */
+  private async persistAuditLog(): Promise<void> {
+    try {
+      const { appendFileSync, mkdirSync } = await import('fs');
+      const { join } = await import('path');
+      const logDir = join(process.cwd(), 'logs');
+      mkdirSync(logDir, { recursive: true });
+      const logPath = join(logDir, 'safety-audit.jsonl');
+      const lastEntry = this.decisionLog[this.decisionLog.length - 1];
+      if (lastEntry) {
+        appendFileSync(logPath, JSON.stringify(lastEntry) + '\n');
+      }
+    } catch { /* best effort — non-critical */ }
   }
 }
 

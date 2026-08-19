@@ -114,6 +114,24 @@ services:
         condition: service_healthy
     restart: unless-stopped
 
+  # ── MEMORY TIER 4: Cognee REST API (Graph Memory Engine) ──
+  cognee:
+    image: cognee/cognee:latest
+    container_name: miforge-cognee
+    ports:
+      - "8001:8000"
+    environment:
+      - GRAPH_DATABASE_PROVIDER=kuzu
+      - GRAPH_DATABASE_URL=bolt://kuzu:7687
+      - VECTOR_DATABASE_PROVIDER=chromadb
+      - VECTOR_DATABASE_URL=http://chromadb:8000
+    depends_on:
+      kuzu:
+        condition: service_started
+      chromadb:
+        condition: service_healthy
+    restart: unless-stopped
+
 volumes:
   redis-data:
   kuzu-data:
