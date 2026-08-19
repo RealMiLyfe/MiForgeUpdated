@@ -1,0 +1,42 @@
+{
+  "name": "@miforge/platform",
+  "version": "1.0.0",
+  "description": "MiForge AI Platform — The Complete Free AI Development Stack",
+  "type": "module",
+  "private": true,
+  "workspaces": [
+    "providers",
+    "memory",
+    "rag",
+    "orchestration",
+    "mcp",
+    "safety",
+    "observability",
+    "self-improvement",
+    "computer-use",
+    "sdk/typescript"
+  ],
+  "scripts": {
+    "bootstrap": "bash bootstrap.sh",
+    "dev": "concurrently \"npm:dev:*\"",
+    "dev:proxy": "node providers/fcc-proxy.mjs",
+    "dev:dashboard": "node observability/dashboard.mjs",
+    "build": "tsc -b tsconfig.json",
+    "test": "vitest --run",
+    "health": "node providers/health-check.mjs",
+    "configure": "node mcp/autoconfig.mjs"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.7",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "concurrently": "^9.1.0",
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

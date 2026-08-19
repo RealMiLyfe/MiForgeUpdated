@@ -74,6 +74,37 @@ Import your VS Code setup including extensions and settings during the initial s
 
 ---
 
+## 🧬 Developer Platform (AI Stack)
+
+MiForge includes a complete free AI development platform for building directly into the MiLyfe governance ecosystem. **Zero credit cards. Unlimited tokens. 15+ providers.**
+
+```bash
+cd platform && bash bootstrap.sh  # One command → entire stack ready
+```
+
+**[📖 Full Platform Documentation →](platform/README.md)**
+
+| Layer | What It Does | Cost |
+|-------|-------------|------|
+| **Providers** | 15+ free AI APIs with auto-failover and 429 prediction | $0 |
+| **Memory OS** | 4-tier persistent memory (context → Redis → Mem0 → Cognee graph) | $0 |
+| **RAG** | Embed (Cohere) → Vector (ChromaDB) → Rerank → Knowledge Graph | $0 |
+| **MCP** | Auto-configures tool servers from project structure scan | $0 |
+| **Safety** | 7 Sacred Human Gates — irreversible actions require approval | $0 |
+| **Observability** | CostZero Dashboard — real-time provider health monitoring | $0 |
+| **Self-Improvement** | Genetic prompt optimizer + weekly eval harness | $0 |
+
+```typescript
+import { MiForge } from '@miforge/platform';
+const forge = new MiForge();
+
+const result = await forge.complete('Build a governance module', { taskType: 'coding' });
+await forge.memory.remember('User prefers TypeScript', 'user_42', 0.8);
+await forge.safe('deploy', async () => { /* Gate 1 triggers → human approves */ });
+```
+
+---
+
 ## 🤖 AI-Powered Issue Automation
 
 This repository includes a complete automated issue management system powered by AWS Bedrock:

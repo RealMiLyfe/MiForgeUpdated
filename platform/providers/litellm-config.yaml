@@ -1,0 +1,82 @@
+# ═══════════════════════════════════════════════════════════════
+# MiForge LiteLLM Proxy Configuration
+# Exposes all free providers behind one OpenAI-compatible endpoint
+# docker run -v $(pwd):/app -p 4000:4000 ghcr.io/berriai/litellm --config /app/litellm-config.yaml
+# ═══════════════════════════════════════════════════════════════
+
+model_list:
+  # ── TIER 1: Deep Reasoning (Claude Opus replacement) ──
+  - model_name: claude-opus-4-5
+    litellm_params:
+      model: nvidia_nim/moonshotai/kimi-k2-thinking
+      api_key: os.environ/NVIDIA_API_KEY
+      api_base: https://integrate.api.nvidia.com/v1
+
+  - model_name: claude-opus-4-5
+    litellm_params:
+      model: github/o3
+      api_key: os.environ/GITHUB_TOKEN
+      api_base: https://models.inference.ai.azure.com
+
+  # ── TIER 2: Coding/General (Claude Sonnet replacement) ──
+  - model_name: claude-sonnet-4-5
+    litellm_params:
+      model: nvidia_nim/nvidia/nemotron-3-super-120b-a12b
+      api_key: os.environ/NVIDIA_API_KEY
+      api_base: https://integrate.api.nvidia.com/v1
+
+  - model_name: claude-sonnet-4-5
+    litellm_params:
+      model: nvidia_nim/qwen/qwen3-coder-480b
+      api_key: os.environ/NVIDIA_API_KEY
+      api_base: https://integrate.api.nvidia.com/v1
+
+  # ── TIER 3: Fast/Light (Claude Haiku replacement) ──
+  - model_name: claude-haiku-4-5
+    litellm_params:
+      model: groq/llama-3.3-70b-versatile
+      api_key: os.environ/GROQ_API_KEY
+
+  - model_name: claude-haiku-4-5
+    litellm_params:
+      model: cerebras/llama-3.3-70b
+      api_key: os.environ/CEREBRAS_API_KEY
+
+  # ── Long Context ──
+  - model_name: gemini-flash
+    litellm_params:
+      model: gemini/gemini-2.5-flash
+      api_key: os.environ/GEMINI_API_KEY
+
+  # ── Embeddings ──
+  - model_name: text-embedding
+    litellm_params:
+      model: cohere/embed-english-v3.0
+      api_key: os.environ/COHERE_API_KEY
+
+  # ── Rerank ──
+  - model_name: rerank
+    litellm_params:
+      model: cohere/rerank-english-v3.0
+      api_key: os.environ/COHERE_API_KEY
+
+  # ── Local Fallback (unlimited, no key) ──
+  - model_name: local-fallback
+    litellm_params:
+      model: ollama/qwen3-coder
+      api_base: http://localhost:11434
+
+router_settings:
+  routing_strategy: least-busy
+  num_retries: 3
+  retry_after: 5
+  timeout: 30
+  fallbacks:
+    - claude-opus-4-5: [claude-sonnet-4-5, gemini-flash]
+    - claude-sonnet-4-5: [claude-haiku-4-5, gemini-flash]
+    - claude-haiku-4-5: [local-fallback]
+    - gemini-flash: [claude-sonnet-4-5, local-fallback]
+
+general_settings:
+  master_key: miforge-local-dev
+  database_url: sqlite:///litellm.db
