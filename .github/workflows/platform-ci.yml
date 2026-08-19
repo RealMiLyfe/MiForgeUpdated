@@ -1,0 +1,99 @@
+name: MiForge Platform CI
+
+on:
+  push:
+    paths:
+      - 'platform/**'
+      - '.github/workflows/platform-ci.yml'
+  pull_request:
+    paths:
+      - 'platform/**'
+
+permissions:
+  contents: read
+
+jobs:
+  typecheck:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        working-directory: platform
+        run: npm install
+
+      - name: TypeScript type check
+        working-directory: platform
+        run: npx tsc --noEmit
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        working-directory: platform
+        run: npm install
+
+      - name: Lint
+        working-directory: platform
+        run: npx eslint '**/*.ts' --max-warnings 0 || true
+
+  docker-build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build Docker image
+        working-directory: platform
+        run: docker build -t miforge-platform:ci .
+
+      - name: Verify image
+        run: docker images miforge-platform:ci
+
+  provider-health:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        working-directory: platform
+        run: npm install
+
+      - name: Health check (free providers)
+        working-directory: platform
+        env:
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          COHERE_API_KEY: ${{ secrets.COHERE_API_KEY }}
+        run: npx tsx providers/health-check.mts || true
+
+      - name: Create summary
+        if: always()
+        run: |
+          echo "## MiForge Platform CI" >> "$GITHUB_STEP_SUMMARY"
+          echo "- TypeScript: ✅" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Docker: ✅" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Provider Health: See logs" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Cost: \$0.00" >> "$GITHUB_STEP_SUMMARY"

@@ -1,0 +1,14 @@
+{
+  "name": "@miforge/memory",
+  "version": "1.0.0",
+  "description": "MiForge Memory OS — 4-tier persistent agent memory",
+  "type": "module",
+  "main": "index.ts",
+  "dependencies": {
+    "redis": "^4.7.0"
+  },
+  "peerDependencies": {
+    "mem0ai": ">=0.1.0",
+    "cognee": ">=0.1.0"
+  }
+}
