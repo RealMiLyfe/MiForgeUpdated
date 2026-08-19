@@ -1,0 +1,14 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 💵 MiLyfe Billing Support
+    url: https://support.milyfe.com/billing
+    about: For billing-related questions, please contact MiLyfe Billing Support.
+  - name: 💬 MiForge Community Discord
+    url: https://discord.gg/milyfe
+    about: Join the community to discuss features, share feedback, and connect with other developers using MiForge.
+  - name: 📚 MiForge Documentation
+    url: https://docs.miforge.dev
+    about: Refer to our technical documentation for guides, best practices and troubleshooting common issues.
+  - name: 👻 MiForge Website
+    url: https://miforge.dev
+    about: Learn about MiForge features and download the latest version.
